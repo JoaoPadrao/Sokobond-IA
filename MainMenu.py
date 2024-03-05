@@ -16,7 +16,7 @@ class Menu:
                 self.selected_option = (self.selected_option + 1) % len(self.options)
             elif event.key == pygame.K_RETURN:
                 return self.selected_option
-        return None
+        return None     
 
     def draw(self, screen, window_size):
         screen.fill((255, 255, 255))  

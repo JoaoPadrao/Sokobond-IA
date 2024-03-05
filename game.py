@@ -1,5 +1,6 @@
 import pygame
 import sys
+from elements import Atom, GridElement  # Import the Atom and GridElement classes
 
 # Initialize Pygame
 pygame.init()
@@ -17,11 +18,10 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GRAY = (240, 240, 240)
-DARK_YEALLOW = (255, 212, 82)
+DARK_YELLOW = (255, 212, 82)
 
 # Define player position (starting at the center)
 player_pos = [9, 9]  # Set player position based on your custom board
-
 
 # Define custom board
 custom_board = [
@@ -36,8 +36,21 @@ custom_board = [
     ".......##G##........",
     "........###.........",
     "....................",
-    "....................",   
-    ]
+    "....................",
+]
+
+# Convert custom board to Atom objects and GridElement objects
+board_elements = []
+for y, row in enumerate(custom_board):
+    for x, cell in enumerate(row):
+        if cell == '#':
+            board_elements.append(GridElement(x, y, DARK_YELLOW))
+        elif cell == 'G':
+            board_elements.append(GridElement(x, y, GRAY))
+        elif cell == 'H':
+            board_elements.append(Atom(x, y, RED))
+        elif cell == 'O':
+            board_elements.append(Atom(x, y, BLUE))
 
 # Main game loop
 running = True
@@ -49,37 +62,36 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 running = False
-            elif event.key == pygame.K_LEFT and player_pos[0] > 0:
-                player_pos[0] -= 1
-            elif event.key == pygame.K_RIGHT and player_pos[0] < GRID_SIZE - 1:
-                player_pos[0] += 1
-            elif event.key == pygame.K_UP and player_pos[1] > 0:
-                player_pos[1] -= 1
-            elif event.key == pygame.K_DOWN and player_pos[1] < GRID_SIZE - 1:
-                player_pos[1] += 1
+            else:
+                # Calculate the next position based on the key pressed
+                next_pos = player_pos[:]
+                if event.key == pygame.K_LEFT:
+                    next_pos[0] -= 1
+                elif event.key == pygame.K_RIGHT:
+                    next_pos[0] += 1
+                elif event.key == pygame.K_UP:
+                    next_pos[1] -= 1
+                elif event.key == pygame.K_DOWN:
+                    next_pos[1] += 1
+                
+                # Check if the next position collides with a wall
+                if custom_board[next_pos[1]][next_pos[0]] != '#':
+                    player_pos = next_pos  # Move the player only if there's no collision
 
     # Fill the window with background color
     WINDOW.fill(WHITE)
 
     # Draw the custom board
-    for y, row in enumerate(custom_board):
-        for x, cell in enumerate(row):
-            if cell == '#':
-                pygame.draw.rect(WINDOW, DARK_YEALLOW, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            elif cell == 'G':
-                pygame.draw.rect(WINDOW, GRAY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            elif cell == 'H':
-                pygame.draw.rect(WINDOW, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-            elif cell == 'O':
-                pygame.draw.rect(WINDOW, BLUE, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+    for element in board_elements:
+        element.draw(WINDOW, CELL_SIZE)
 
     # Draw horizontal grid lines
     for y in range(0, WINDOW_SIZE[1], CELL_SIZE):
-        pygame.draw.line(WINDOW, WHITE, (0, y), (WINDOW_SIZE[0], y),3)
-    
+        pygame.draw.line(WINDOW, WHITE, (0, y), (WINDOW_SIZE[0], y), 3)
+
     # Draw vertical grid lines
     for x in range(0, WINDOW_SIZE[0], CELL_SIZE):
-        pygame.draw.line(WINDOW, WHITE, (x, 0), (x, WINDOW_SIZE[1]),3)
+        pygame.draw.line(WINDOW, WHITE, (x, 0), (x, WINDOW_SIZE[1]), 3)
 
     # Draw the player (is the X in the custom board)
     player_rect = pygame.Rect(player_pos[0] * CELL_SIZE, player_pos[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -91,3 +103,4 @@ while running:
 # Quit Pygame
 pygame.quit()
 sys.exit()
+
