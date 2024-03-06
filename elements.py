@@ -1,5 +1,4 @@
 import pygame
-from constants import *
 
 # Class for the Atom object
 class Atom:
