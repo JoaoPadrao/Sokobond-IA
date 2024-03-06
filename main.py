@@ -1,4 +1,4 @@
-from menu import MainMenu
+from draw import MainMenu
 
 if __name__ == "__main__":
     main_menu = MainMenu()

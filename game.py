@@ -21,7 +21,6 @@ GRAY = (240, 240, 240)
 DARK_YELLOW = (255, 212, 82)
 
 # Define player position (starting at the center)
-player_pos = [9, 9]  # Set player position based on your custom board
 
 # Define custom board
 custom_board = [
@@ -38,9 +37,22 @@ custom_board = [
     "....................",
     "....................",
 ]
+board_elements = []
+
+# Set the initial player position based on the custom board
+player_atom = None
+for y, row in enumerate(custom_board):
+    for x, cell in enumerate(row):
+        if cell == 'X':
+            player_pos = [x, y]
+            board_elements.append(Atom(x, y, BLUE))
+            break
+    else:
+        continue
+    break
+
 
 # Convert custom board to Atom objects and GridElement objects
-board_elements = []
 for y, row in enumerate(custom_board):
     for x, cell in enumerate(row):
         if cell == '#':
@@ -56,6 +68,8 @@ for y, row in enumerate(custom_board):
 running = True
 while running:
     # Handle events
+    # In the main game loop
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -73,10 +87,35 @@ while running:
                     next_pos[1] -= 1
                 elif event.key == pygame.K_DOWN:
                     next_pos[1] += 1
-                
+
+                print("Next position:", next_pos)
+
                 # Check if the next position collides with a wall
                 if custom_board[next_pos[1]][next_pos[0]] != '#':
-                    player_pos = next_pos  # Move the player only if there's no collision
+                    # Check if the next position collides with an atom
+                    for element in board_elements:
+                        if isinstance(element, Atom) and element.get_position() == next_pos:
+                            print("Collision with atom detected")
+                            # Calculate the direction of the push
+                            dx = next_pos[0] - player_pos[0]
+                            dy = next_pos[1] - player_pos[1]
+                            pushed_atom_pos = (next_pos[0] + dx, next_pos[1] + dy)
+
+                            print("Pushed atom position:", pushed_atom_pos)
+
+                            # Check if the pushed atom can move to the new position
+                            if custom_board[pushed_atom_pos[1]][pushed_atom_pos[0]] != '#' and \
+                            all(element.get_position() != atom.get_position() for atom in board_elements if isinstance(atom, Atom)):
+                                print("Pushing atom")
+                                # Move the pushed atom
+                                element.move(dx, dy)
+                                # Move the player
+                                player_pos = next_pos
+                                break  # Break the loop as we've handled the collision
+                    else:
+                        player_pos = next_pos  # Move the player only if there's no collision
+
+
 
     # Fill the window with background color
     WINDOW.fill(WHITE)
@@ -99,6 +138,7 @@ while running:
 
     # Update the display
     pygame.display.flip()
+
 
 # Quit Pygame
 pygame.quit()
