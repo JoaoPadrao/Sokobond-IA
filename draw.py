@@ -1,18 +1,27 @@
 import pygame
 import sys
 import os
+from boards import BOARDS  # Import predefined levels from boards.py
+from elements import Atom, GridElement  # Import the Atom and GridElement classes
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 ORANGE = (255, 165, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GRAY = (240, 240, 240)
+DARK_YELLOW = (255, 212, 82)
 
+WINDOW_SIZE = (1000, 600)
+GRID_SIZE = 20
+CELL_SIZE = WINDOW_SIZE[0] // GRID_SIZE
 
 class Game:
     def __init__(self):
         pygame.init()
         self.screen_width = 1000
         self.screen_height = 600
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("Sokobond")
 
 class MainMenu(Game):
@@ -48,8 +57,7 @@ class MainMenu(Game):
                         choose_level = ChooseLevel()
                         choose_level.run()
                     elif self.selected_item == 1:
-                        # Options menu
-                        print("Options menu...")
+                        print("Settings")
                     elif self.selected_item == 3:
                         pygame.quit()
                         sys.exit()
@@ -105,7 +113,9 @@ class ChooseLevel(Game):
                 elif event.key == pygame.K_DOWN:
                     self.selected_level = (self.selected_level + 1) % len(self.levels)
                 elif event.key == pygame.K_RETURN:
-                    print(f"Starting {self.levels[self.selected_level]}...")
+                    level_number = self.selected_level + 1
+                    game_level = GameLevel(level_number)    
+                    game_level.run()
                 elif event.key == pygame.K_ESCAPE:
                     return False
         return True
@@ -116,7 +126,73 @@ class ChooseLevel(Game):
             running =self.handle_events()
             self.draw()
             pygame.display.update()
-            
+    
+class GameLevel(Game):
+    def __init__(self, level_number):
+        super().__init__()
+        self.level_number = level_number
+        self.level_data = BOARDS[level_number]  
+        self.cell_size = CELL_SIZE
+        self.player_position = self.find_player_position() 
+        self.boad_elements = self.create_board_elements()
+        self.player = Atom(self.player_position[0], self.player_position[1],DARK_YELLOW )
+
+    def find_player_position(self):
+        for y, row in enumerate(self.level_data):
+            for x, cell in enumerate(row):
+                if cell == 'X':
+                    return (x, y)
+        return None  # Return None if player position is not found
+
+    def create_board_elements(self):
+        board_elements = []
+        for y, row in enumerate(self.level_data):
+            for x, cell in enumerate(row):
+                if cell == '#':
+                    board_elements.append(GridElement(x, y, DARK_YELLOW))
+                elif cell == 'G':
+                    board_elements.append(GridElement(x, y, GRAY))
+                elif cell == 'H':
+                    board_elements.append(Atom(x, y, RED))
+                elif cell == 'O':
+                    board_elements.append(Atom(x, y, BLUE))
+
+        return board_elements
+    
+    def draw(self):
+        self.screen.fill(WHITE)
+        for element in self.boad_elements:
+            element.draw(self.screen, self.cell_size)
+
+        for y in range(0, self.screen.get_height(), self.cell_size):
+            pygame.draw.line(self.screen, WHITE, (0, y), (self.screen.get_width(), y), 3)
+
+        for x in range(0, self.screen.get_width(), self.cell_size):
+            pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
+
+
+
+        #draw the player
+        self.player.draw(self.screen, self.cell_size)
+
+        pygame.display.flip()
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.key == pygame.K_ESCAPE:
+                    return False
+        return True
+
+    def run(self):
+        running = True
+        while running:
+            running = self.handle_events()
+            self.draw()
+            pygame.display.update()
+
 # Main entry point
 if __name__ == "__main__":
     menu = MainMenu()
