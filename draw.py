@@ -176,15 +176,16 @@ class GameLevel(Game):
         self.player.draw(self.screen, self.cell_size)
 
         pygame.display.flip()
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.key == pygame.K_ESCAPE:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     return False
         return True
+
 
     def run(self):
         running = True
