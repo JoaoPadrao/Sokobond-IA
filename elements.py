@@ -1,32 +1,45 @@
 import pygame
+from constants import *
 
 # Class for the Atom object
 class Atom:
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color,max_connection):
         self.x = x
         self.y = y
         self.color = color
-        self.target_x = x  # Target x-coordinate for animation
-        self.target_y = y  # Target y-coordinate for animation
-        self.animation_speed = 0.1  # Speed of animation (adjust as needed)
+        self.max_connection = max_connection
+        self.target_x = x  
+        self.target_y = y 
+        self.connection = []
+
+    def add_connection(self, atom):
+        if len(self.connection) < self.max_connection:
+            self.connection.append(atom)
+            atom.connection.append(self)
+            self.max_connection -= 1
+            atom.max_connection -= 1
+            return True
+        else :
+            return False
+    
+    def remove_connection(self, atom):
+        if atom in self.connection:
+            self.connection.remove(atom)
+            atom.connection.remove(self)
+            self.max_connection += 1
+            atom.max_connection += 1
+            
 
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell
-
+        font = pygame.font.Font(None, 24)
+        connection_text = font.render(str(self.max_connection), True, BLACK)
+        text_rect = connection_text.get_rect(center=(self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2))
+        screen.blit(connection_text, text_rect)
+        
     def move(self, dx, dy):
         self.target_x = self.x + dx
         self.target_y = self.y + dy
-
-    def update(self):
-        # Update position gradually towards the target position
-        if self.x < self.target_x:
-            self.x += min(self.target_x - self.x, self.animation_speed)
-        elif self.x > self.target_x:
-            self.x -= min(self.x - self.target_x, self.animation_speed)
-        if self.y < self.target_y:
-            self.y += min(self.target_y - self.y, self.animation_speed)
-        elif self.y > self.target_y:
-            self.y -= min(self.y - self.target_y, self.animation_speed)
 
     def set_position(self, x, y):
         self.x = x

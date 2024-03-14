@@ -1,20 +1,9 @@
 import pygame
 import sys
 import os
-from boards import BOARDS  # Import predefined levels from boards.py
-from elements import Atom, GridElement  # Import the Atom and GridElement classes
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-ORANGE = (255, 165, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-GRAY = (240, 240, 240)
-DARK_YELLOW = (255, 212, 82)
-
-WINDOW_SIZE = (1000, 600)
-GRID_SIZE = 20
-CELL_SIZE = WINDOW_SIZE[0] // GRID_SIZE
+from boards import BOARDS, ATOM_MAPPING 
+from elements import Atom, GridElement  
+from constants import *  
 
 class Game:
     def __init__(self):
@@ -133,16 +122,22 @@ class GameLevel(Game):
         self.level_number = level_number
         self.level_data = BOARDS[level_number]  
         self.cell_size = CELL_SIZE
-        self.player_position = self.find_player_position() 
-        self.boad_elements = self.create_board_elements()
-        self.player = Atom(self.player_position[0], self.player_position[1],DARK_YELLOW )
+        self.atom_player_position = self.find_atom_player_position() 
+        self.board_elements = self.create_board_elements()
+        self.atom_player = self.get_atom_player()
 
-    def find_player_position(self):
+    def find_atom_player_position(self):
         for y, row in enumerate(self.level_data):
             for x, cell in enumerate(row):
                 if cell == 'X':
                     return (x, y)
-        return None  # Return None if player position is not found
+        return None  
+
+    def get_atom_player(self):
+        atom_mapping = ATOM_MAPPING.get(self.level_number)
+        atom_player_attributes = atom_mapping.get('X')
+        return Atom(self.atom_player_position[0], self.atom_player_position[1], atom_player_attributes[0], atom_player_attributes[1])
+
 
     def create_board_elements(self):
         board_elements = []
@@ -153,15 +148,16 @@ class GameLevel(Game):
                 elif cell == 'G':
                     board_elements.append(GridElement(x, y, GRAY))
                 elif cell == 'H':
-                    board_elements.append(Atom(x, y, RED))
+                    board_elements.append(Atom(x, y, RED,1))
                 elif cell == 'O':
-                    board_elements.append(Atom(x, y, BLUE))
-
+                    board_elements.append(Atom(x, y, BLUE,2))
+                elif cell == 'C':
+                    board_elements.append(Atom(x, y, DARK_YELLOW,4))
         return board_elements
     
     def draw(self):
         self.screen.fill(WHITE)
-        for element in self.boad_elements:
+        for element in self.board_elements:
             element.draw(self.screen, self.cell_size)
 
         for y in range(0, self.screen.get_height(), self.cell_size):
@@ -170,21 +166,31 @@ class GameLevel(Game):
         for x in range(0, self.screen.get_width(), self.cell_size):
             pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
 
-
-
-        #draw the player
-        self.player.draw(self.screen, self.cell_size)
-
+        self.atom_player.draw(self.screen, self.cell_size)
         pygame.display.flip()
+   
+   
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_LEFT:
+                    self.move_atom_player(-1, 0)
+                elif event.key == pygame.K_RIGHT:
+                    self.move_atom_player(1, 0)
+                elif event.key == pygame.K_UP:
+                    self.move_atom_player(0, -1)
+                elif event.key == pygame.K_DOWN:
+                    self.move_atom_player(0, 1)
+                elif event.key == pygame.K_ESCAPE:
                     return False
         return True
+    
+    def move_atom_player(self, dx, dy):
+        self.atom_player.x = self.atom_player.x + dx
+        self.atom_player.y = self.atom_player.y + dy
 
 
     def run(self):
@@ -193,8 +199,3 @@ class GameLevel(Game):
             running = self.handle_events()
             self.draw()
             pygame.display.update()
-
-# Main entry point
-if __name__ == "__main__":
-    menu = MainMenu()
-    menu.run()

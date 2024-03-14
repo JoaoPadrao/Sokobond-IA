@@ -1,3 +1,39 @@
+# This is used to map the "Atom Player" to the respective color and max_connection
+from constants import *
+
+ATOM_MAPPING = {
+    1: {
+        'X' : [RED,1]
+    },
+    2: {
+        'X' : [RED,1]
+    },
+    3: {
+        'X' : [BLUE,2]
+    },
+    4: {
+        'X' : [GREEN,3]
+    },
+    5: {
+        'X' : [RED,1]
+    },
+    6: {
+        'X' : [GREEN,3]
+    },
+    7: {
+        'X' : [DARK_YELLOW,4]
+    },
+    8: {
+        'X' : [GREEN,3]
+    },
+    9: {
+        'X' : [DARK_YELLOW,4]
+    },
+    10: {
+        'X' : [BLUE,2]
+    }
+}
+
 BOARDS = {
     1: [
     "....................",
@@ -156,7 +192,7 @@ BOARDS = {
     "......#########.....",
     "......#GGGGGGG#.....",
     "......#GGHGHGG#.....",
-    "......#GOGGGXG#.....",
+    "......#GXGGGCG#.....",
     "......#GGHGHGG#.....",
     "......#GGGGGGG#.....",
     "......#########.....",
