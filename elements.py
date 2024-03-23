@@ -25,7 +25,6 @@ class Atom:
             atom.connection.remove(self)
             self.max_connection += 1
             atom.max_connection += 1
-            
 
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell

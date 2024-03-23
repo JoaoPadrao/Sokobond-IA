@@ -198,21 +198,33 @@ class GameLevel(Game):
         new_y = self.atom_player.y + dy
 
         if self.is_valid_move(new_x, new_y):
+            if len(self.atom_player.connection) == 0:
+                self.atom_player.x = new_x
+                self.atom_player.y = new_y
+
             atom = self.is_atom_connection(new_x, new_y)
-            print("valid move")
             if atom is not None and atom not in self.atom_player.connection:
                 self.atom_player.add_connection(atom)
+                print(self.atom_player.connection)
                 
-            # Move the player atom and its connections
-            self.atom_player.x = new_x
-            self.atom_player.y = new_y
+
+
             for connected_atom in self.atom_player.connection:
-                connected_atom.x += dx
-                connected_atom.y += dy
+                new_atom = self.is_atom_connection(connected_atom.x + dx, connected_atom.y + dy)
+                if self.is_valid_move(connected_atom.x + dx, connected_atom.y + dy):
+                    connected_atom.x += dx
+                    connected_atom.y += dy
+                    self.atom_player.x = new_x
+                    self.atom_player.y = new_y
+                
+                if new_atom is not None and new_atom not in connected_atom.connection:
+                    connected_atom.add_connection(new_atom)
+                    self.atom_player.connection.append(new_atom)
                 
         else:
             print("Invalid move")
 
+    
     def is_valid_move(self, x, y):
         if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
             return False
@@ -234,3 +246,8 @@ class GameLevel(Game):
             running = self.handle_events()
             self.draw()
             pygame.display.update()
+
+
+if __name__ == "__main__":
+    main_menu = MainMenu()
+    main_menu.run()
