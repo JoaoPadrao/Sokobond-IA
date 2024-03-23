@@ -157,6 +157,7 @@ class GameLevel(Game):
     
     def draw(self):
         self.screen.fill(WHITE)
+        
         for element in self.board_elements:
             element.draw(self.screen, self.cell_size)
 
@@ -167,7 +168,6 @@ class GameLevel(Game):
             pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
 
         self.atom_player.draw(self.screen, self.cell_size)
-        pygame.display.flip()
    
    
     def handle_events(self):
@@ -189,10 +189,43 @@ class GameLevel(Game):
         return True
     
     def move_atom_player(self, dx, dy):
-        self.atom_player.x = self.atom_player.x + dx
-        self.atom_player.y = self.atom_player.y + dy
+        new_x = self.atom_player.x + dx
+        new_y = self.atom_player.y + dy
+
+        if self.is_valid_move(new_x, new_y):
+            atom = self.is_atom_connection(new_x, new_y)
+            print("valid move")
+            if atom is not None and atom not in self.atom_player.connection: # If it's a connection, add it to the connection list
+                self.atom_player.add_connection(atom)
+                                
+            else: # If it's not a connection, just move the atom
+                print("new_x", new_x)
+                self.atom_player.x = new_x
+                self.atom_player.y = new_y
+                for connected_atom in self.atom_player.connection:
+                    connected_atom.x += dx
+                    connected_atom.y += dy
+
+                
+        else:
+            print("Invalid move")
 
 
+    def is_valid_move(self, x, y):
+        if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
+            return False
+        if self.level_data[y][x] == '#':
+            return False
+        return True
+    
+    def is_atom_connection(self, target_x, target_y):
+        for element in self.board_elements:
+            if isinstance(element, Atom) and element != self.atom_player and element.x == target_x and element.y == target_y:
+                return element
+        return None
+    
+    
+  
     def run(self):
         running = True
         while running:

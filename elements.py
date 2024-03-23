@@ -13,14 +13,11 @@ class Atom:
         self.connection = []
 
     def add_connection(self, atom):
-        if len(self.connection) < self.max_connection:
+        if self.max_connection > 0 and atom.max_connection > 0:
             self.connection.append(atom)
             atom.connection.append(self)
             self.max_connection -= 1
             atom.max_connection -= 1
-            return True
-        else :
-            return False
     
     def remove_connection(self, atom):
         if atom in self.connection:
