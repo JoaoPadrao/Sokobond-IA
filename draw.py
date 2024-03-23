@@ -167,8 +167,13 @@ class GameLevel(Game):
         for x in range(0, self.screen.get_width(), self.cell_size):
             pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
 
+        # Draw connected atoms
+        for connected_atom in self.atom_player.connection:
+            connected_atom.draw(self.screen, self.cell_size)
+
         self.atom_player.draw(self.screen, self.cell_size)
-   
+        pygame.display.flip()
+
    
     def handle_events(self):
         for event in pygame.event.get():
@@ -195,21 +200,18 @@ class GameLevel(Game):
         if self.is_valid_move(new_x, new_y):
             atom = self.is_atom_connection(new_x, new_y)
             print("valid move")
-            if atom is not None and atom not in self.atom_player.connection: # If it's a connection, add it to the connection list
+            if atom is not None and atom not in self.atom_player.connection:
                 self.atom_player.add_connection(atom)
-                                
-            else: # If it's not a connection, just move the atom
-                print("new_x", new_x)
-                self.atom_player.x = new_x
-                self.atom_player.y = new_y
-                for connected_atom in self.atom_player.connection:
-                    connected_atom.x += dx
-                    connected_atom.y += dy
-
+                
+            # Move the player atom and its connections
+            self.atom_player.x = new_x
+            self.atom_player.y = new_y
+            for connected_atom in self.atom_player.connection:
+                connected_atom.x += dx
+                connected_atom.y += dy
                 
         else:
             print("Invalid move")
-
 
     def is_valid_move(self, x, y):
         if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
