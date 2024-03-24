@@ -31,7 +31,7 @@ class MainMenu(Game):
                 pygame.draw.rect(self.screen, ORANGE, (text_rect.x - 10, text_rect.y - 5, text_rect.width + 20, text_rect.height + 10))  
             self.screen.blit(text, text_rect)
             
-    def handle_events(self):
+    def handle_events(self): #for handling user interactions 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

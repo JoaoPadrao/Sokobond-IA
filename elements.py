@@ -4,13 +4,13 @@ from constants import *
 # Class for the Atom object
 class Atom:
     def __init__(self, x, y, color,max_connection):
-        self.x = x
-        self.y = y
+        self.x = x  #atom's x position
+        self.y = y  #atom's y position
         self.color = color
         self.max_connection = max_connection
         self.target_x = x  
         self.target_y = y 
-        self.connection = []
+        self.connection = [] #list of atoms that are connected to this atom
 
     def add_connection(self, atom):
         if self.max_connection > 0 and atom.max_connection > 0:
@@ -18,7 +18,20 @@ class Atom:
             atom.connection.append(self)
             self.max_connection -= 1
             atom.max_connection -= 1
-    
+    """
+    def add_connection(self, atom):
+        # Check if the atoms are already connected
+        if atom in self.connections:
+            return False  # Or raise an exception
+        # Check if both atoms have available connection slots
+        if len(self.connections) < self.max_connection and len(atom.connections) < atom.max_connection:
+            self.connections.append(atom)
+            atom.connections.append(self)
+            return True
+        else:
+            return False  # Or raise an exception indicating no available slots
+    """   
+
     def remove_connection(self, atom):
         if atom in self.connection:
             self.connection.remove(atom)
@@ -26,6 +39,23 @@ class Atom:
             self.max_connection += 1
             atom.max_connection += 1
 
+    """
+    def remove_connection(self, atom):
+    # Check if the specified atom is currently connected
+    if atom in self.connections:
+        # Remove the connection from both atoms
+        self.connections.remove(atom)
+        atom.connections.remove(self)
+        
+        # Do not modify max_connection, as it should represent a constant maximum
+        # Instead, the current number of connections can be inferred from len(self.connections)
+        
+        return True  # Indicate successful removal
+    else:
+        return False  # Indicate that there was no such connection
+
+    """
+    #draws the atom on the screen and the number of connections it has
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell
         font = pygame.font.Font(None, 24)
@@ -57,7 +87,7 @@ class Molecule:
     def remove_atom(self, atom):
         self.atoms.remove(atom)
 
-    def move(self, dx, dy):
+    def move(self, dx, dy):  #move all atoms in the molecule by a certain amount
         for atom in self.atoms:
             atom.move(dx, dy)
 
@@ -65,7 +95,7 @@ class Molecule:
         for atom in self.atoms:
             atom.draw(screen, cell_size)
 
-    def get_position(self):
+    def get_position(self):  # the get_position method seems to be incomplete or incorrect, as there are no x and y properties defined in the Molecule class.
         return (self.x, self.y)
 
 # Class for the GridElement object
