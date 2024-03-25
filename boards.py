@@ -1,4 +1,4 @@
-# This is used to map the "Atom Player" to the respective color and max_connection
+# This is used to map the "Atom Player" to the respective color and max_connection(bonds)
 from constants import *
 
 ATOM_MAPPING = {

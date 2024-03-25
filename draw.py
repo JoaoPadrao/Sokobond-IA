@@ -24,24 +24,26 @@ class MainMenu(Game):
         self.screen.fill(WHITE) 
         self.screen.blit(self.background_image, (self.screen_width // 2 - self.background_image.get_width() // 2, self.screen_height // 5 - self.background_image.get_height() // 2))
         font = pygame.font.Font(None, 36)
-        for index, item in enumerate(self.menu_items):
+        for index, item in enumerate(self.menu_items): #menu_items = ["Start Game", "Settings", "About", "Quit"]
             text = font.render(item, True, BLACK)
-            text_rect = text.get_rect(center=(self.screen_width // 2, 300 + index * 50))
+            ##The get_rect() method is called on the text object, which is a Pygame Surface object created from rendering text.
+            #The get_rect() method returns a new rectangle that completely covers the surface
+            text_rect = text.get_rect(center=(self.screen_width // 2, 300 + index * 50)) #center the text on the screen
             if index == self.selected_item:
                 pygame.draw.rect(self.screen, ORANGE, (text_rect.x - 10, text_rect.y - 5, text_rect.width + 20, text_rect.height + 10))  
             self.screen.blit(text, text_rect)
             
     def handle_events(self): #for handling user interactions 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
+            if event.type == pygame.QUIT: #if the user clicks the close button
+                pygame.quit() #cleanly exit the Pygame
+                sys.exit() #terminate the Python script
+            elif event.type == pygame.KEYDOWN: #if the user presses a key
                 if event.key == pygame.K_UP:
                     self.selected_item = (self.selected_item - 1) % len(self.menu_items)
                 elif event.key == pygame.K_DOWN:
                     self.selected_item = (self.selected_item + 1) % len(self.menu_items)
-                elif event.key == pygame.K_RETURN:
+                elif event.key == pygame.K_RETURN: #if the user presses the Enter key
                     if self.selected_item == 0:
                         choose_level = ChooseLevel()
                         choose_level.run()
@@ -115,8 +117,8 @@ class ChooseLevel(Game):
             running =self.handle_events()
             self.draw()
             pygame.display.update()
-    
-class GameLevel(Game):
+  
+class GameLevel(Game): #represents a level in a game
     def __init__(self, level_number):
         super().__init__()
         self.level_number = level_number
@@ -126,7 +128,7 @@ class GameLevel(Game):
         self.board_elements = self.create_board_elements()
         self.atom_player = self.get_atom_player()
 
-    def find_atom_player_position(self):
+    def find_atom_player_position(self): #iterates over the level data and returns the position of the player (represented by 'X') as a tuple of (x, y) coordinates
         for y, row in enumerate(self.level_data):
             for x, cell in enumerate(row):
                 if cell == 'X':
@@ -134,8 +136,9 @@ class GameLevel(Game):
         return None  
 
     def get_atom_player(self):
-        atom_mapping = ATOM_MAPPING.get(self.level_number)
-        atom_player_attributes = atom_mapping.get('X')
+        atom_mapping = ATOM_MAPPING.get(self.level_number) # get the atom mapping for the current level defined in game level function: def __init__(self, level_number)
+        atom_player_attributes = atom_mapping.get('X') #por exemplo se level_number = 1, atom_mapping = {1: {'X' : [RED,1]}}
+        #from class Atom (defined in elements.py) ->  def __init__(self, x, y, color,max_connection):
         return Atom(self.atom_player_position[0], self.atom_player_position[1], atom_player_attributes[0], atom_player_attributes[1])
 
 
@@ -169,10 +172,11 @@ class GameLevel(Game):
 
         # Draw connected atoms
         for connected_atom in self.atom_player.connection:
+            # For each connected atom, it calls the draw method, passing in the game screen and the size of each cell
             connected_atom.draw(self.screen, self.cell_size)
 
         self.atom_player.draw(self.screen, self.cell_size)
-        pygame.display.flip()
+        pygame.display.flip() #Pygame function that updates the entire display
 
    
     def handle_events(self):
@@ -198,42 +202,46 @@ class GameLevel(Game):
         new_y = self.atom_player.y + dy
 
         if self.is_valid_move(new_x, new_y):
-            if len(self.atom_player.connection) == 0:
+            if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
+                #updates the x and y coordinates of the player's atom to the new position
                 self.atom_player.x = new_x
                 self.atom_player.y = new_y
 
-            atom = self.is_atom_connection(new_x, new_y)
+            #checks if there is an atom at the new position that can be connected to the player's atom by calling the is_atom_connection function.
+            atom = self.is_atom_connection(new_x, new_y) #-----------> TODO!! estamos a adicionar uma conexao na mesma celula que o player
             if atom is not None and atom not in self.atom_player.connection:
-                self.atom_player.add_connection(atom)
+                self.atom_player.add_connection(atom)  # -----------> TODO!! its not checking if the atoms bonds are full
                 print(self.atom_player.connection)
                 
-
-
+            #For each connected atom, it calculates the new position of the atom (if the player's atom moves, the connected atoms move with it)
             for connected_atom in self.atom_player.connection:
+                #checking for a potential atom connection at the new position of each atom that is already connected to the player's atom
                 new_atom = self.is_atom_connection(connected_atom.x + dx, connected_atom.y + dy)
                 if self.is_valid_move(connected_atom.x + dx, connected_atom.y + dy):
                     connected_atom.x += dx
                     connected_atom.y += dy
+                    #The player's position is updated inside the loop for each connected atom. This means the player's position could be updated multiple times, which might not be the intended behavior.
                     self.atom_player.x = new_x
                     self.atom_player.y = new_y
                 
                 if new_atom is not None and new_atom not in connected_atom.connection:
-                    connected_atom.add_connection(new_atom)
+                    connected_atom.add_connection(new_atom) # -----------> TODO!! No checks for maximum connections
                     self.atom_player.connection.append(new_atom)
                 
         else:
             print("Invalid move")
 
     
-    def is_valid_move(self, x, y):
+    def is_valid_move(self, x, y): #  ----------------------------------> TODO: incomplete
         if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
             return False
         if self.level_data[y][x] == '#':
             return False
         return True
     
+    #used to check if there's an atom at a specific location on the game board that can be connected to the player's atom
     def is_atom_connection(self, target_x, target_y):
-        for element in self.board_elements:
+        for element in self.board_elements: #iterates over the board elements and checks if there's an atom at the target location
             if isinstance(element, Atom) and element != self.atom_player and element.x == target_x and element.y == target_y:
                 return element
         return None
