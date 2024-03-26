@@ -193,6 +193,9 @@ class GameLevel(Game): #represents a level in a game
                     self.move_atom_player(0, -1)
                 elif event.key == pygame.K_DOWN:
                     self.move_atom_player(0, 1)
+                elif event.key == pygame.K_b: #"if the user presses the 'b' key, the game will go back to the main menu"
+                    goback = MainMenu()
+                    goback.run()
                 elif event.key == pygame.K_ESCAPE:
                     return False
         return True
@@ -201,49 +204,75 @@ class GameLevel(Game): #represents a level in a game
         new_x = self.atom_player.x + dx
         new_y = self.atom_player.y + dy
 
-        if self.is_valid_move(new_x, new_y):
+        if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
+            #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
+            
+            #SINGLE ATOM CASE
             if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
-                #updates the x and y coordinates of the player's atom to the new position
-                self.atom_player.x = new_x
-                self.atom_player.y = new_y
-
-            #checks if there is an atom at the new position that can be connected to the player's atom by calling the is_atom_connection function.
-            atom = self.is_atom_connection(new_x, new_y) #-----------> TODO!! estamos a adicionar uma conexao na mesma celula que o player
-            if atom is not None and atom not in self.atom_player.connection:
-                self.atom_player.add_connection(atom)  # -----------> TODO!! its not checking if the atoms bonds are full
-                print(self.atom_player.connection)
-                
-            #For each connected atom, it calculates the new position of the atom (if the player's atom moves, the connected atoms move with it)
-            for connected_atom in self.atom_player.connection:
-                #checking for a potential atom connection at the new position of each atom that is already connected to the player's atom
-                new_atom = self.is_atom_connection(connected_atom.x + dx, connected_atom.y + dy)
-                if self.is_valid_move(connected_atom.x + dx, connected_atom.y + dy):
-                    connected_atom.x += dx
-                    connected_atom.y += dy
-                    #The player's position is updated inside the loop for each connected atom. This means the player's position could be updated multiple times, which might not be the intended behavior.
+                #checks if there is an atom at the new position that can be connected to the player's atom
+                atom = self.is_atom_connection(new_x, new_y) #estamos a adicionar uma conexao na mesma celula que o player ???
+                if atom is not None and atom not in self.atom_player.connection:
+                    #no updates on the player's position since there's an atom there
+                    if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
+                        print("New atom connection:", self.atom_player.connection)
+                else: #there's no atom at the new position
+                    #updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
                     self.atom_player.y = new_y
-                
-                if new_atom is not None and new_atom not in connected_atom.connection:
-                    connected_atom.add_connection(new_atom) # -----------> TODO!! No checks for maximum connections
-                    self.atom_player.connection.append(new_atom)
-                
+
+            #MOLECULE CASE
+            elif len(self.atom_player.connection) > 0:
+                #checks if there is an atom at the new position that can be connected to the molecule
+                atom = self.is_atom_connection(new_x, new_y) #estamos a adicionar uma conexao na mesma celula que o player ???
+                if atom is not None and atom not in self.atom_player.connection:
+                    #no updates on the player's position since there's an atom there
+                    if self.atom_player.add_connection(atom): #adicionar nova conexao se respeitar as condições
+                        print("New connection to molecule:", self.atom_player.connection)
+                else: #there's no atom at the new position
+                    #updates the x and y coordinates of all atoms in the molecule to the new position
+                    for connected_atom in self.atom_player.connection:
+                        connected_atom.x += dx
+                        connected_atom.y += dy
+                        self.atom_player.x = new_x
+                        self.atom_player.y = new_y      
         else:
             print("Invalid move")
 
-    
-    def is_valid_move(self, x, y): #  ----------------------------------> TODO: incomplete
-        if x < 0 or x >= GRID_SIZE or y < 0 or y >= GRID_SIZE:
+    ############################################################ HERE
+    def is_valid_move(self, atom, dx, dy, visited=None):
+        if visited is None:
+            visited = set()
+
+        new_x = atom.x + dx
+        new_y = atom.y + dy
+
+        # Check if new position is outside the grid
+        if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
+            print("Invalid move: Outside Grid")
             return False
-        if self.level_data[y][x] == '#':
+
+        # Check if new position is a wall
+        if self.level_data[new_y][new_x] == '#':
+            print("Invalid move: Wall")
             return False
+
+        # Check for all connected atoms
+        for connected_atom in self.atom_player.connection:
+            if connected_atom not in visited:
+                visited.add(connected_atom)
+                # Recursive call to check the move for each connected atom
+                if not self.is_valid_move(connected_atom, dx, dy, visited):
+                    print("Connected atom invalid move")
+                    return False
+        # If all checks pass, the move is valid
         return True
-    
+
+   
     #used to check if there's an atom at a specific location on the game board that can be connected to the player's atom
     def is_atom_connection(self, target_x, target_y):
         for element in self.board_elements: #iterates over the board elements and checks if there's an atom at the target location
             if isinstance(element, Atom) and element != self.atom_player and element.x == target_x and element.y == target_y:
-                return element
+                return element  #returning an atom object if it's found at the target location
         return None
     
     
