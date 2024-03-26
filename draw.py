@@ -206,7 +206,7 @@ class GameLevel(Game): #represents a level in a game
 
         if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
             #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
-            
+
             #SINGLE ATOM CASE
             if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
                 #checks if there is an atom at the new position that can be connected to the player's atom
@@ -222,19 +222,23 @@ class GameLevel(Game): #represents a level in a game
 
             #MOLECULE CASE
             elif len(self.atom_player.connection) > 0:
+                last_connected_atom = self.atom_player.connection[-1] #get the last atom connected to the player's atom
                 #checks if there is an atom at the new position that can be connected to the molecule
-                atom = self.is_atom_connection(new_x, new_y) #estamos a adicionar uma conexao na mesma celula que o player ???
+                atom = self.is_atom_connection(new_x, new_y)
                 if atom is not None and atom not in self.atom_player.connection:
                     #no updates on the player's position since there's an atom there
                     if self.atom_player.add_connection(atom): #adicionar nova conexao se respeitar as condições
-                        print("New connection to molecule:", self.atom_player.connection)
+                        print("New molecule connection (Player):", self.atom_player.connection)
+                    #checking if the last connected atom can be connected to the atom at the new position
+                    elif last_connected_atom.add_connection(atom):
+                        print("New molecule connection (Other)")
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of all atoms in the molecule to the new position
                     for connected_atom in self.atom_player.connection:
                         connected_atom.x += dx
                         connected_atom.y += dy
                         self.atom_player.x = new_x
-                        self.atom_player.y = new_y      
+                        self.atom_player.y = new_y
         else:
             print("Invalid move")
 
