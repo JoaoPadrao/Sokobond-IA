@@ -252,15 +252,15 @@ class GameLevel(Game): #represents a level in a game
                 elif len(edge_atom) > 1:
                     print("Multiple edge atoms")
                     atom_found = False
-                    for atom in edge_atom:
+                    for atom_element in edge_atom:
                         #target position é em relação a todos os atomos na borda
-                        new_x = atom.x + dx
-                        new_y = atom.y + dy
+                        new_x = atom_element.x + dx
+                        new_y = atom_element.y + dy
                         #checks if there is an atom at the new position that can be connected
                         atom = self.is_atom_connection(new_x, new_y)
                         if atom is not None and atom not in all_atoms:
                             atom_found = True
-                            if atom.add_connection(atom): #adicionar nova conexao se respeitar as condições
+                            if atom_element.add_connection(atom): #adicionar nova conexao se respeitar as condições
                                 print("New molecule connection")
                             else:
                                 print("Can not connect Atom")
