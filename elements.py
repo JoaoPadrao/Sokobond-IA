@@ -13,11 +13,12 @@ class Atom:
         self.connection = [] #list of atoms that are connected to this atom
 
     def add_connection(self, atom):
-        if atom in self.connection:
+        if (atom in self.connection or len(self.connection) >= self.max_connection or len(atom.connection) >= atom.max_connection):
             return False  
-        if len(self.connection) < self.max_connection and len(atom.connection) < atom.max_connection:
+        elif (len(self.connection) < self.max_connection and len(atom.connection) < atom.max_connection):
             self.connection.append(atom)
             atom.connection.append(self)
+            print("Connection successfully added")
             return True  
             
     """

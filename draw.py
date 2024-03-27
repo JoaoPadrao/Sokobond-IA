@@ -138,7 +138,7 @@ class GameLevel(Game): #represents a level in a game
     def get_atom_player(self):
         atom_mapping = ATOM_MAPPING.get(self.level_number) # get the atom mapping for the current level defined in game level function: def __init__(self, level_number)
         atom_player_attributes = atom_mapping.get('X') #por exemplo se level_number = 1, atom_mapping = {1: {'X' : [RED,1]}}
-        #from class Atom (defined in elements.py) ->  def __init__(self, x, y, color,max_connection):
+        #from class Atom (defined in elements.py) -> (x, y, color, max_connection)
         return Atom(self.atom_player_position[0], self.atom_player_position[1], atom_player_attributes[0], atom_player_attributes[1])
 
 
@@ -201,20 +201,23 @@ class GameLevel(Game): #represents a level in a game
         return True
     
     def move_atom_player(self, dx, dy):
-        new_x = self.atom_player.x + dx
-        new_y = self.atom_player.y + dy
 
         if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
             #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
 
             #SINGLE ATOM CASE
             if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
+                #target position é em relação ao player
+                new_x = self.atom_player.x + dx
+                new_y = self.atom_player.y + dy
                 #checks if there is an atom at the new position that can be connected to the player's atom
                 atom = self.is_atom_connection(new_x, new_y) #estamos a adicionar uma conexao na mesma celula que o player ???
                 if atom is not None and atom not in self.atom_player.connection:
                     #no updates on the player's position since there's an atom there
                     if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
                         print("New atom connection:", self.atom_player.connection)
+                    else:
+                        print("Can not connect Atom")
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
@@ -222,27 +225,110 @@ class GameLevel(Game): #represents a level in a game
 
             #MOLECULE CASE
             elif len(self.atom_player.connection) > 0:
-                last_connected_atom = self.atom_player.connection[-1] #get the last atom connected to the player's atom
-                #checks if there is an atom at the new position that can be connected to the molecule
-                atom = self.is_atom_connection(new_x, new_y)
-                if atom is not None and atom not in self.atom_player.connection:
-                    #no updates on the player's position since there's an atom there
-                    if self.atom_player.add_connection(atom): #adicionar nova conexao se respeitar as condições
-                        print("New molecule connection (Player):", self.atom_player.connection)
-                    #checking if the last connected atom can be connected to the atom at the new position
-                    elif last_connected_atom.add_connection(atom):
-                        print("New molecule connection (Other)")
-                else: #there's no atom at the new position
-                    #updates the x and y coordinates of all atoms in the molecule to the new position
-                    for connected_atom in self.atom_player.connection:
-                        connected_atom.x += dx
-                        connected_atom.y += dy
-                        self.atom_player.x = new_x
-                        self.atom_player.y = new_y
-        else:
-            print("Invalid move")
 
-    ############################################################ HERE
+                #Gather all atoms in the molecule
+                all_atoms = self.gather_molecule_atoms(self.atom_player)
+                # Get a LIST of atoms on the edge of the molecule
+                edge_atom = self.get_extreme_atoms(all_atoms, dx, dy)
+
+                if len(edge_atom) == 1:
+                    #target position é em relação ao edge_atom
+                    print("One single edge")
+                    new_x = edge_atom[0].x + dx
+                    new_y = edge_atom[0].y + dy
+                    #checks if there is an atom at the new position that can be connected to the edge_atom
+                    atom = self.is_atom_connection(new_x, new_y)
+                    if atom is not None and atom not in all_atoms:
+                        #no updates on the player's position since there's an atom there
+                        if edge_atom[0].add_connection(atom): #adicionar nova conexao se respeitar as condições
+                            print("New molecule connection")
+                        else:
+                            print("Can not connect Atom")
+                    else: #there's no atom at the new position
+                    #updates the x and y coordinates of all atoms in the molecule to the new position            
+                        visited = set()
+                        self.update_positions(self.atom_player, dx, dy, visited)
+
+                elif len(edge_atom) > 1:
+                    print("Multiple edge atoms")
+                    atom_found = False
+                    for atom in edge_atom:
+                        #target position é em relação a todos os atomos na borda
+                        new_x = atom.x + dx
+                        new_y = atom.y + dy
+                        #checks if there is an atom at the new position that can be connected
+                        atom = self.is_atom_connection(new_x, new_y)
+                        if atom is not None and atom not in all_atoms:
+                            atom_found = True
+                            if atom.add_connection(atom): #adicionar nova conexao se respeitar as condições
+                                print("New molecule connection")
+                            else:
+                                print("Can not connect Atom")
+                    if not atom_found:
+                        #updates the x and y coordinates of all atoms in the molecule to the new position            
+                        visited = set()
+                        self.update_positions(self.atom_player, dx, dy, visited)
+                        #next: talvez for loop em todos os atomos da molecula?
+                        #FOR ATOM IN ALL_ATOMS -> update_positions(atom, dx, dy, visited)
+
+        else:
+            print("No moves possible at the moment")
+
+    ############################################################ AUX FUNCTIONS ############################################################
+    def gather_molecule_atoms(self, atom, visited=None):
+        if visited is None:
+            visited = set()
+    
+        visited.add(atom)
+    
+        for connected_atom in atom.connection:
+            if connected_atom not in visited:
+                self.gather_molecule_atoms(connected_atom, visited)
+    
+        return visited
+        
+    ### GET ATOM ON THE EDGE OF THE MOLECULE FUNCTIONS ###
+    """Não serve para todos os casos, pois pode haver mais do q um atomo na posiçao xmin e etc.
+    def get_extreme_atom(self, atoms, dx, dy):
+        if dx < 0:  # left (-1,0)
+            return min(atoms, key=lambda atom: atom.x)
+        elif dx > 0:  # right (1,0)
+            return max(atoms, key=lambda atom: atom.x)
+        elif dy < 0:  # up (0,-1)
+            return min(atoms, key=lambda atom: atom.y)
+        else:  # down
+            return max(atoms, key=lambda atom: atom.y)
+    """
+
+    def get_extreme_atoms(self, atoms, dx, dy):
+        if dx < 0:  # left (-1,0)
+            min_x = min(atom.x for atom in atoms)
+            return [atom for atom in atoms if atom.x == min_x]
+        elif dx > 0:  # right (1,0)
+            max_x = max(atom.x for atom in atoms)
+            return [atom for atom in atoms if atom.x == max_x]
+        elif dy < 0:  # up (0,-1)
+            min_y = min(atom.y for atom in atoms)
+            return [atom for atom in atoms if atom.y == min_y]
+        else:  # down
+            max_y = max(atom.y for atom in atoms)
+            return [atom for atom in atoms if atom.y == max_y]
+
+    ### UPDATE POSITIONS OF ALL ATOMS FUNCTIONS ###
+    def update_positions(self, atom, dx, dy, visited):
+        # Update the position of the current atom
+        atom.x += dx
+        atom.y += dy
+
+        # Add the current atom to the set of visited atoms
+        visited.add(atom)
+
+        # Recursively update the positions of all connected atoms that haven't been visited yet
+        for connected_atom in atom.connection:
+            if connected_atom not in visited:
+                self.update_positions(connected_atom, dx, dy, visited)        
+
+    ### VALIDATE MOVES FUNCTIONS ###
     def is_valid_move(self, atom, dx, dy, visited=None):
         if visited is None:
             visited = set()
@@ -261,7 +347,7 @@ class GameLevel(Game): #represents a level in a game
             return False
 
         # Check for all connected atoms
-        for connected_atom in self.atom_player.connection:
+        for connected_atom in atom.connection:
             if connected_atom not in visited:
                 visited.add(connected_atom)
                 # Recursive call to check the move for each connected atom
@@ -279,8 +365,7 @@ class GameLevel(Game): #represents a level in a game
                 return element  #returning an atom object if it's found at the target location
         return None
     
-    
-  
+     
     def run(self):
         running = True
         while running:
