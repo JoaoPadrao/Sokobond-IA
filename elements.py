@@ -64,29 +64,6 @@ class Atom:
     def get_position(self):
         return (self.x, self.y)
 
-# Class for the Molecule object
-class Molecule:
-    def __init__(self, x, y):
-        self.atoms = []
-        self.x = x
-        self.y = y
-
-    def add_atom(self, atom):
-        self.atoms.append(atom)
-
-    def remove_atom(self, atom):
-        self.atoms.remove(atom)
-
-    def move(self, dx, dy):  #move all atoms in the molecule by a certain amount
-        for atom in self.atoms:
-            atom.move(dx, dy)
-
-    def draw(self, screen, cell_size):
-        for atom in self.atoms:
-            atom.draw(screen, cell_size)
-
-    def get_position(self):  # the get_position method seems to be incomplete, as there are no x and y properties defined in the Molecule class.
-        return (self.x, self.y)
 
 # Class for the GridElement object
 class GridElement:
