@@ -20,29 +20,12 @@ class Atom:
             atom.connection.append(self)
             print("Connection successfully added")
             return True  
-            
-    """
-    def add_connection(self, atom):
-        if self.max_connection > 0 and atom.max_connection > 0:
-            self.connection.append(atom)
-            atom.connection.append(self)
-            self.max_connection -= 1
-            atom.max_connection -= 1
-    """   
 
     def remove_connection(self, atom):
         if atom in self.connection: # Remove the connection from both atoms
             self.connection.remove(atom)
             atom.connection.remove(self)
 
-    """
-     def remove_connection(self, atom):
-        if atom in self.connection:
-            self.connection.remove(atom)
-            atom.connection.remove(self)
-            self.max_connection += 1
-            atom.max_connection += 1
-    """
     #draws the atom on the screen and the number of connections it has
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell
