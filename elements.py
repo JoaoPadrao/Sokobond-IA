@@ -7,7 +7,7 @@ class Atom:
         self.x = x  #atom's x position
         self.y = y  #atom's y position
         self.color = color
-        self.max_connection = max_connection #H: 1, O: 2, C: 4
+        self.max_connection = max_connection #H: 1, O: 2, N: 3 C: 4
         self.target_x = x  
         self.target_y = y 
         self.connection = [] #list of atoms that are connected to this atom
@@ -47,7 +47,7 @@ class Atom:
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell
         font = pygame.font.Font(None, 24)
-        connection_text = font.render(str(len(self.connection)), True, BLACK)
+        connection_text = font.render(str(len(self.connection)), True, WHITE)
         text_rect = connection_text.get_rect(center=(self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2))
         screen.blit(connection_text, text_rect)
         

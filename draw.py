@@ -178,6 +178,42 @@ class GameLevel(Game): #represents a level in a game
                 element.draw(self.screen, self.cell_size)
 
         self.atom_player.draw(self.screen, self.cell_size)
+        
+        """
+        # Create a font object
+        font = pygame.font.Font(None, 24)
+
+        # Render the information text
+        info_text = "H: 1\nO: 2\nN: 3\nC: 4"
+        text_surface = font.render(info_text, True, (0, 0, 0))  # Black text
+
+        # Blit the text onto the screen at the desired position
+        self.screen.blit(text_surface, (self.screen.get_width() - text_surface.get_width() - 10, 10))
+        """
+
+        # Initialize font
+        font = pygame.font.Font(None, 24)
+
+        # Information text position start (adjust as needed)
+        info_x = 20  #self.screen.get_width() - 200  # For example, 200 pixels from the right edge
+        info_y = 20  # Start 20 pixels from the top
+
+        # Example text for each atom type
+        game_info = {
+            'Z': 'Press Z to undo connection',
+            'I': ' ',
+            'H': 'H (red): 1 bond',
+            'O': 'O (blue): 2 bonds',
+            'N': 'N (green): 3 bonds',
+            'C': 'C (yellow): 4 bonds',
+        }
+
+        # Render and display each piece of text
+        for atom_type, text in game_info.items():
+            text_surface = font.render(text, True, (128,128,128))  # Black text
+            self.screen.blit(text_surface, (info_x, info_y))
+            info_y += 30  # Move down before rendering the next piece of text
+
         pygame.display.flip() #Pygame function that updates the entire display
 
    
