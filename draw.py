@@ -179,6 +179,10 @@ class GameLevel(Game): #represents a level in a game
             # For each connected atom, it calls the draw method, passing in the game screen and the size of each cell
             connected_atom.draw(self.screen, self.cell_size)
 
+        for element in self.board_elements:
+            if isinstance(element, Atom):
+                element.draw(self.screen, self.cell_size)
+
         self.atom_player.draw(self.screen, self.cell_size)
         pygame.display.flip() #Pygame function that updates the entire display
 
@@ -207,20 +211,15 @@ class GameLevel(Game): #represents a level in a game
         return True
     
     def undo_last_action(self):
-        self.update_positions(self.atom_player, self.prev_x - self.atom_player.x, self.prev_y - self.atom_player.y, set())
-        #Now undo the connection if the recent move was a connection
-        all_atoms = self.gather_molecule_atoms(self.atom_player)
-        if self.trackMoves[-1] == "connection":
-            atom_that_will_connect = self.lastAtomConnected[-2]
-            atom_that_will_connect.remove_connection(self.lastAtomConnected[-1])
+        if len(self.trackMoves) > 0:    
+            if self.trackMoves[-1][0] == "connection":
+                self.trackMoves[-1][1].remove_connection(self.trackMoves[-1][2])
+                self.trackMoves.pop()
 
     def move_atom_player(self, dx, dy):
 
         if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
             #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
-            self.prev_x = self.atom_player.x
-            self.prev_y = self.atom_player.y
-            self.trackMoves.append((self.prev_x, self.prev_y))
 
             #SINGLE ATOM CASE
             if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
@@ -233,7 +232,7 @@ class GameLevel(Game): #represents a level in a game
                     #no updates on the player's position since there's an atom there
                     if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
                         print("New atom connection:", self.atom_player.connection)
-                        self.trackMoves.append("connection")
+                        self.trackMoves.append(("connection", self.atom_player, atom))
                         self.lastAtomConnected.append(atom)
                     else: #PUSH the atom
                         print("Can not connect Atom")
@@ -260,7 +259,7 @@ class GameLevel(Game): #represents a level in a game
                         #no updates on the player's position since there's an atom there
                         if edge_atom[0].add_connection(atom): #adicionar nova conexao se respeitar as condições
                             print("New molecule connection")
-                            self.trackMoves.append("connection")
+                            self.trackMoves.append(("connection", edge_atom[0], atom))
                             self.lastAtomConnected.append(atom)
                         else:
                             print("Can not connect Atom")
@@ -282,7 +281,7 @@ class GameLevel(Game): #represents a level in a game
                             atom_found = True
                             if atom_element.add_connection(atom): #adicionar nova conexao se respeitar as condições
                                 print("New molecule connection")
-                                self.trackMoves.append("connection")
+                                self.trackMoves.append(("connection", atom_element, atom))
                                 self.lastAtomConnected.append(atom)
                             else:
                                 print("Can not connect Atom")
