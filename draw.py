@@ -172,12 +172,6 @@ class GameLevel(Game): #represents a level in a game
         for x in range(0, self.screen.get_width(), self.cell_size):
             pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
 
-        # Draw connected atoms
-        all_atoms = self.gather_molecule_atoms(self.atom_player)
-
-        for connected_atom in all_atoms:
-            # For each connected atom, it calls the draw method, passing in the game screen and the size of each cell
-            connected_atom.draw(self.screen, self.cell_size)
 
         for element in self.board_elements:
             if isinstance(element, Atom):
