@@ -293,10 +293,54 @@ class GameLevel(Game): #represents a level in a game
                         #next: talvez for loop em todos os atomos da molecula?
                         #FOR ATOM IN ALL_ATOMS -> update_positions(atom, dx, dy, visited)
 
+            # After all movements made, check if all connections are filled
+            if self.check_all_connections_filled():
+                self.show_message("Level complete! Press Enter to choose the next level.")
+                ChooseLevel().run()
+
         else:
             print("No moves possible at the moment")
 
     ############################################################ AUX FUNCTIONS ############################################################
+    #FUNCTION TO SHOW A POP-UP MESSAGE
+    def show_message(self, message):
+
+        font = pygame.font.Font(None, 26) # to define the font and size
+        text = font.render(message, True, (255, 255, 255))  # render a white text
+        # to define the text rectangle and position it at the center of the screen
+        text_rect = text.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
+        # Draw a semi-transparent rectangle as the background of the pop-up
+        background_rect = pygame.Rect(text_rect.x - 20, text_rect.y - 20, text_rect.width + 40, text_rect.height + 40)
+        pygame.draw.rect(self.screen, (0, 0, 0, 128), background_rect)  # Black semi-transparent background
+
+        self.screen.blit(text, text_rect) # to draw (blit) the text on the screen
+
+        pygame.display.flip()  # to update the display
+
+        # Wait for the player to press Enter
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        return
+
+    ### FUNCTION TO VERIFY IF CONNECTIONS IN ALL ATOMS ARE FILLED AND LEVEL OVER ###
+    def check_all_connections_filled(self):
+        # Iterate over all atom elements in the game grid
+        for element in self.board_elements:
+            # Check if the element is an instance of Atom
+            if isinstance(element, Atom):
+                # Check if the atom's connections are less than its max connections
+                if len(element.connection) < element.max_connection:
+                    # Found an atom that doesn't have all connections filled
+                    return False
+        # All atoms have their connections filled
+        return True
+        
+    ### FUNCTION TO GATHER ALL ATOMS IN THE MOLECULE ###
     def gather_molecule_atoms(self, atom, visited=None):
         if visited is None:
             visited = set()
