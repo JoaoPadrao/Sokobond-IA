@@ -236,6 +236,12 @@ class GameLevel(Game): #represents a level in a game
                         self.lastAtomConnected.append(atom)
                     else: #PUSH the atom
                         print("Can not connect Atom")
+                        valid_move = self.is_valid_move(atom, dx, dy)
+                        if valid_move: ## Move the atom if the move is valid
+                            self.update_positions(atom, dx, dy,set())
+                            self.atom_player.x = new_x
+                        self.atom_player.y = new_y
+
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
@@ -261,8 +267,12 @@ class GameLevel(Game): #represents a level in a game
                             print("New molecule connection")
                             self.trackMoves.append(("connection", edge_atom[0], atom))
                             self.lastAtomConnected.append(atom)
-                        else:
+                        else: #PUSH
                             print("Can not connect Atom")
+                            valid_move = self.is_valid_move(atom, dx, dy)
+                            if valid_move: ## Move the atom if the move is valid
+                                self.update_positions(atom, dx, dy,set())
+                                self.update_positions(edge_atom[0], dx, dy,set())
                     else: #there's no atom at the new position
                     #updates the x and y coordinates of all atoms in the molecule to the new position            
                         visited = set()
@@ -285,6 +295,11 @@ class GameLevel(Game): #represents a level in a game
                                 self.lastAtomConnected.append(atom)
                             else:
                                 print("Can not connect Atom")
+                                valid_move = self.is_valid_move(atom, dx, dy)
+                                if valid_move: ## Move the atom if the move is valid
+                                    print("Atom is being pushed")
+                                    self.update_positions(atom, dx, dy,set())
+                                    self.update_positions(self.atom_player, dx, dy, set())
                     if not atom_found:
                         #updates the x and y coordinates of all atoms in the molecule to the new position            
                         visited = set()
