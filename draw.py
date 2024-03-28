@@ -171,7 +171,9 @@ class GameLevel(Game): #represents a level in a game
             pygame.draw.line(self.screen, WHITE, (x, 0), (x, self.screen.get_height()), 3)
 
         # Draw connected atoms
-        for connected_atom in self.atom_player.connection:
+        all_atoms = self.gather_molecule_atoms(self.atom_player)
+
+        for connected_atom in all_atoms:
             # For each connected atom, it calls the draw method, passing in the game screen and the size of each cell
             connected_atom.draw(self.screen, self.cell_size)
 
@@ -216,7 +218,7 @@ class GameLevel(Game): #represents a level in a game
                     #no updates on the player's position since there's an atom there
                     if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
                         print("New atom connection:", self.atom_player.connection)
-                    else:
+                    else: #PUSH the atom
                         print("Can not connect Atom")
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
@@ -288,18 +290,6 @@ class GameLevel(Game): #represents a level in a game
         return visited
         
     ### GET ATOM ON THE EDGE OF THE MOLECULE FUNCTIONS ###
-    """Não serve para todos os casos, pois pode haver mais do q um atomo na posiçao xmin e etc.
-    def get_extreme_atom(self, atoms, dx, dy):
-        if dx < 0:  # left (-1,0)
-            return min(atoms, key=lambda atom: atom.x)
-        elif dx > 0:  # right (1,0)
-            return max(atoms, key=lambda atom: atom.x)
-        elif dy < 0:  # up (0,-1)
-            return min(atoms, key=lambda atom: atom.y)
-        else:  # down
-            return max(atoms, key=lambda atom: atom.y)
-    """
-
     def get_extreme_atoms(self, atoms, dx, dy):
         if dx < 0:  # left (-1,0)
             min_x = min(atom.x for atom in atoms)
