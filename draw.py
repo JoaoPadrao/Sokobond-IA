@@ -235,7 +235,7 @@ class GameLevel(Game): #represents a level in a game
                         print("New atom connection:", self.atom_player.connection)
                         self.trackMoves.append("connection")
                         self.lastAtomConnected.append(atom)
-                    else:
+                    else: #PUSH the atom
                         print("Can not connect Atom")
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
@@ -310,18 +310,6 @@ class GameLevel(Game): #represents a level in a game
         return visited
         
     ### GET ATOM ON THE EDGE OF THE MOLECULE FUNCTIONS ###
-    """Não serve para todos os casos, pois pode haver mais do q um atomo na posiçao xmin e etc.
-    def get_extreme_atom(self, atoms, dx, dy):
-        if dx < 0:  # left (-1,0)
-            return min(atoms, key=lambda atom: atom.x)
-        elif dx > 0:  # right (1,0)
-            return max(atoms, key=lambda atom: atom.x)
-        elif dy < 0:  # up (0,-1)
-            return min(atoms, key=lambda atom: atom.y)
-        else:  # down
-            return max(atoms, key=lambda atom: atom.y)
-    """
-
     def get_extreme_atoms(self, atoms, dx, dy):
         if dx < 0:  # left (-1,0)
             min_x = min(atom.x for atom in atoms)
