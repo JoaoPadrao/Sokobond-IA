@@ -21,18 +21,23 @@ def dfs(current_state):
         current_node, path = stack.pop()
         current_state = current_node.state  # Get the current state from the current node
 
+        if current_state.is_goal():
+            current_state.game_level.show_message("Level complete! Press Enter to choose the next level.")
+            return path
+        
         if current_node in visited:
             continue
         
         visited.add(current_node)
         
-        if current_state.is_goal():
-            print("found goal")
-            return path
         
         neighbors = current_state.get_neighbors()
         print("Length of neighbors: ", len(neighbors))
         for neighbor_state, move in neighbors:
+            if neighbor_state.is_goal():
+                path = path + [move]
+                neighbor_state.game_level.show_message("Level complete! Press Enter to choose the next level.")                
+                return path
             visited_flag = False
             for visited_node in visited:
                 if visited_node.state == neighbor_state:

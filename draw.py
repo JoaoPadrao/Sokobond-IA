@@ -235,9 +235,11 @@ class GameLevel(Game): #represents a level in a game
         if len(self.trackMoves) > 0:    
             if self.trackMoves[-1][0] == "connection":
                 self.trackMoves[-1][1].remove_connection(self.trackMoves[-1][2])
+                print("Connection removed")
                 self.trackMoves.pop()
 
     def move_atom_player(self, dx, dy):
+        print("Player position:", self.atom_player.x, self.atom_player.y)
         for element in self.board_elements:
             if isinstance(element, Atom):
                 print("Atom position:", element.x, element.y)
@@ -263,13 +265,12 @@ class GameLevel(Game): #represents a level in a game
                         if valid_move: ## Move the atom if the move is valid
                             self.update_positions(atom, dx, dy,set())
                             self.atom_player.x = new_x
-                        self.atom_player.y = new_y
+                            self.atom_player.y = new_y
 
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
                     self.atom_player.y = new_y
-                    print("Player's atom position:", self.atom_player.x, self.atom_player.y)
 
             #MOLECULE CASE
             elif len(self.atom_player.connection) > 0:
@@ -490,6 +491,7 @@ class GameState:
             if self.game_level.is_valid_move(self.game_level.atom_player, dx, dy):
                 #adicionar a lista de moves possiveis se for
                 moves.append((dx, dy))
+        moves.append("Z")
         return moves
 
     def get_neighbors(self): #child_nodes
@@ -505,6 +507,11 @@ class GameState:
         return neighbors
 
     def make_move(self, move):
+
+        if move == "Z":
+            self.game_level.undo_last_action()
+            return GameState(self.game_level)
+            
         # Create a new GameLevel object with the given level number
         new_level = GameLevel(self.game_level.level_number)
 
