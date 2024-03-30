@@ -4,7 +4,8 @@ import os
 from boards import BOARDS, ATOM_MAPPING 
 from elements import Atom, GridElement  
 from constants import *  
-from algorithms import dfs
+from algorithms import dfs, TreeNode
+import copy
 
 class Game:
     def __init__(self):
@@ -237,7 +238,9 @@ class GameLevel(Game): #represents a level in a game
                 self.trackMoves.pop()
 
     def move_atom_player(self, dx, dy):
-
+        for element in self.board_elements:
+            if isinstance(element, Atom):
+                print("Atom position:", element.x, element.y)
         if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
             #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
 
@@ -266,6 +269,7 @@ class GameLevel(Game): #represents a level in a game
                     #updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
                     self.atom_player.y = new_y
+                    print("Player's atom position:", self.atom_player.x, self.atom_player.y)
 
             #MOLECULE CASE
             elif len(self.atom_player.connection) > 0:
@@ -328,9 +332,9 @@ class GameLevel(Game): #represents a level in a game
                         #FOR ATOM IN ALL_ATOMS -> update_positions(atom, dx, dy, visited)
 
             # After all movements made, check if all connections are filled
-            if self.check_all_connections_filled():
-                self.show_message("Level complete! Press Enter to choose the next level.")
-                ChooseLevel().run()
+   #         if self.check_all_connections_filled():
+    #            self.show_message("Level complete! Press Enter to choose the next level.")
+     #           ChooseLevel().run()
 
         else:
             print("No moves possible at the moment")
@@ -470,14 +474,13 @@ class GameState:
         #self.level = level  # Current level
         self.game_level = game_level
 
+    def __eq__(self, other):
+        return self.game_level.atom_player.x == other.game_level.atom_player.x and self.game_level.atom_player.y == other.game_level.atom_player.y
+
     def is_goal(self): #same as GameLevel.check_all_connections_filled
-        for element in self.game_level.board_elements:
-            # Check if the element is an instance of Atom
-            if isinstance(element, Atom):
-                if len(element.connection) < element.max_connection:
-                    return False
-        # All atoms have their connections filled - GOAL STATE
-        return True
+        if self.game_level.check_all_connections_filled():
+            return True
+        
     
     def get_possible_moves(self):
         moves = []
@@ -492,16 +495,28 @@ class GameState:
     def get_neighbors(self): #child_nodes
         # Generate all possible successor states
         neighbors = []
+        print("Possible moves:", self.get_possible_moves())
+        print("Position of the player before generate new states:", self.game_level.atom_player.x, self.game_level.atom_player.y)
         for move in self.get_possible_moves():
             new_state = self.make_move(move) #new_state = GameState(self.make_move(move), self.level)  # Create new GameState object
             if new_state:
                 neighbors.append((new_state, move))  # Return move along with state
+                print("Position of the player after generate new states:", new_state.game_level.atom_player.x, new_state.game_level.atom_player.y, " || Move:", move)
         return neighbors
 
     def make_move(self, move):
-        dx, dy = move
-        self.game_level.move_atom_player(dx, dy)
+        # Create a new GameLevel object with the given level number
+        new_level = GameLevel(self.game_level.level_number)
 
+        new_level.atom_player.x = self.game_level.atom_player.x
+        new_level.atom_player.y = self.game_level.atom_player.y
+
+        print("Position of the player before make move:", new_level.atom_player.x, new_level.atom_player.y)
+        # Apply the move to the new game level
+        dx, dy = move
+        new_level.move_atom_player(dx, dy)
+        # Return a new GameState object with the updated game level
+        return GameState(new_level)
 
 if __name__ == "__main__":
     main_menu = MainMenu()
