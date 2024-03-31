@@ -75,19 +75,6 @@ class GameState:
                 elif cell == 'C':
                     board_elements.append(Atom(x, y, DARK_YELLOW,4))
         return board_elements
-
-    def is_goal(self): #same as GameLevel.check_all_connections_filled
-        # Iterate over all atom elements in the game grid
-        for element in self.board_elements:
-            # Check if the element is an instance of Atom
-            if isinstance(element, Atom):
-                # Check if the atom's connections are less than its max connections
-                print(f"Atom at ({element.x}, {element.y}) has {len(element.connection)} connections out of {element.max_connection}")
-                if len(element.connection) < element.max_connection:
-                    # Found an atom that doesn't have all connections filled
-                    return False
-        # All atoms have their connections filled
-        return True
     
     def is_valid_move(self, atom, dx, dy, visited=None):
         if visited is None:
@@ -135,12 +122,28 @@ class GameState:
                 #no updates on the player's position since there's an atom there
                 if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
                     print("Connection successfully added")
+                    print("atom info:", atom.x, atom.y, atom.max_connection, len(atom.connection))
+                    print("player info:", self.atom_player.x, self.atom_player.y, self.atom_player.max_connection, len(self.atom_player.connection))
                     #return (self.atom_player.x, self.atom_player.y)
             #else: #there's no atom at the new position
                 #updates the x and y coordinates of the player's atom to the new position
             return (new_x, new_y)
 
-
+    def is_goal(self): #same as GameLevel.check_all_connections_filled
+        # Iterate over all atom elements in the game grid
+        #for element in self.board_elements:
+            # Check if the element is an instance of Atom
+            #if isinstance(element, Atom):
+                # Check if the atom's connections are less than its max connections
+                #print(f"Atom at ({element.x}, {element.y}) has {len(element.connection)} connections out of {element.max_connection}")
+                #if len(element.connection) < element.max_connection:
+                    # Found an atom that doesn't have all connections filled
+                    #return False
+        # All atoms have their connections filled
+        if len(self.atom_player.connection) == 0:
+            return False
+        else:
+            return True
 
 #### Depth-first search algorithm   
 def dfs(game_state):
