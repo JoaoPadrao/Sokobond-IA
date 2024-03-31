@@ -4,7 +4,7 @@ import os
 from boards import BOARDS, ATOM_MAPPING 
 from elements import Atom, GridElement  
 from constants import *  
-from algorithms import dfs
+from algorithms import *
 
 class Game:
     def __init__(self):
@@ -220,10 +220,10 @@ class GameLevel(Game): #represents a level in a game
                     self.move_atom_player(0, 1)
                 elif event.key == pygame.K_b: #"if the user presses the 'b' key, the game will go back to the main menu"
                     # Create a GameState instance
-                    game_state = GameState(self)
+                    game_state = GameState(1, (7,5))
                     # Call the dfs function
                     path_to_goal = dfs(game_state)
-                    print(path_to_goal)  # print the path to the goal state or do something else with it
+                    print(path_to_goal)  # print the path to the goal state
                 elif event.key == pygame.K_z:
                     self.undo_last_action() 
                 elif event.key == pygame.K_ESCAPE:
@@ -237,6 +237,7 @@ class GameLevel(Game): #represents a level in a game
                 self.trackMoves.pop()
 
     def move_atom_player(self, dx, dy):
+        print("player position:", self.atom_player.x, self.atom_player.y)
 
         if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
             #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
@@ -260,7 +261,7 @@ class GameLevel(Game): #represents a level in a game
                         if valid_move: ## Move the atom if the move is valid
                             self.update_positions(atom, dx, dy,set())
                             self.atom_player.x = new_x
-                        self.atom_player.y = new_y
+                            self.atom_player.y = new_y
 
                 else: #there's no atom at the new position
                     #updates the x and y coordinates of the player's atom to the new position
@@ -460,47 +461,6 @@ class GameLevel(Game): #represents a level in a game
             running = self.handle_events()
             self.draw()
             pygame.display.update()
-
-
-############ NEW GAME STATE CLASS ############
-class GameState:
-    def __init__(self, game_level):
-        #GameLevel.find_atom_player_position
-        #self.player_position = player_position  # Tuple representing player's position (x, y)
-        #self.level = level  # Current level
-        self.game_level = game_level
-
-    def is_goal(self): #same as GameLevel.check_all_connections_filled
-        for element in self.game_level.board_elements:
-            # Check if the element is an instance of Atom
-            if isinstance(element, Atom):
-                if len(element.connection) < element.max_connection:
-                    return False
-        # All atoms have their connections filled - GOAL STATE
-        return True
-    
-    def get_possible_moves(self):
-        moves = []
-        # Check each direction: up, down, left, right
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            #verificar se a move é válida
-            if self.game_level.is_valid_move(self.game_level.atom_player, dx, dy):
-                #adicionar a lista de moves possiveis se for
-                moves.append((dx, dy))
-        return moves
-
-    def get_neighbors(self): #child_nodes
-        # Generate all possible successor states
-        neighbors = []
-        for move in self.get_possible_moves():
-            new_state = self.make_move(move) #new_state = GameState(self.make_move(move), self.level)  # Create new GameState object
-            if new_state:
-                neighbors.append((new_state, move))  # Return move along with state
-        return neighbors
-
-    def make_move(self, move):
-        dx, dy = move
-        self.game_level.move_atom_player(dx, dy)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ class Atom:
         self.target_x = x  
         self.target_y = y 
         self.connection = [] #list of atoms that are connected to this atom
+        self.position = (x, y)
 
     def add_connection(self, atom):
         if (atom in self.connection or len(self.connection) >= self.max_connection or len(atom.connection) >= atom.max_connection):
