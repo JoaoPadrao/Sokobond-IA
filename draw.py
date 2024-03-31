@@ -4,9 +4,9 @@ import os
 from boards import BOARDS, ATOM_MAPPING 
 from elements import Atom, GridElement  
 from constants import *  
-from algorithms import dfs, TreeNode
+from algorithms import dfs, TreeNode, bfs, iterative_deepening
 import copy
-
+import time
 class Game:
     def __init__(self):
         pygame.init()
@@ -18,7 +18,7 @@ class Game:
 class MainMenu(Game):
     def __init__(self):
         super().__init__()
-        self.menu_items = ["Start Game", "Settings", "About", "Quit"]
+        self.menu_items = ["Start Game", "Start Game with AI", "Quit"]
         self.selected_item = 0
         self.background_image = pygame.image.load(os.path.join("data", "Sokobond.png")) 
 
@@ -50,8 +50,9 @@ class MainMenu(Game):
                         choose_level = ChooseLevel()
                         choose_level.run()
                     elif self.selected_item == 1:
-                        print("Settings")
-                    elif self.selected_item == 3:
+                        choose_level = ChooseLevel(with_ai=True)
+                        choose_level.run()
+                    elif self.selected_item == 2:
                         pygame.quit()
                         sys.exit()
 
@@ -62,11 +63,12 @@ class MainMenu(Game):
             pygame.display.update()
 
 class ChooseLevel(Game):
-    def __init__(self):
+    def __init__(self, with_ai=False):
         super().__init__()
         self.levels = ["Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8", "Level 9", "Level 10"]
         self.selected_level = 0
         self.background_image = pygame.image.load(os.path.join("data", "Sokobond.png")) 
+        self.with_ai = with_ai
 
     def draw(self):
         self.screen.fill(WHITE) 
@@ -107,7 +109,7 @@ class ChooseLevel(Game):
                     self.selected_level = (self.selected_level + 1) % len(self.levels)
                 elif event.key == pygame.K_RETURN:
                     level_number = self.selected_level + 1
-                    game_level = GameLevel(level_number)    
+                    game_level = GameLevel(level_number, self.with_ai)    
                     game_level.run()
                 elif event.key == pygame.K_ESCAPE:
                     return False
@@ -121,8 +123,9 @@ class ChooseLevel(Game):
             pygame.display.update()
   
 class GameLevel(Game): #represents a level in a game
-    def __init__(self, level_number):
+    def __init__(self, level_number, with_ai):
         super().__init__()
+        self.with_ai = with_ai
         self.level_number = level_number
         self.level_data = BOARDS[level_number]  
         self.cell_size = CELL_SIZE
@@ -186,15 +189,31 @@ class GameLevel(Game): #represents a level in a game
 
         info_x = 20
         info_y = 20
-
-        game_info = {
-            'Z': 'Press Z to undo connection',
-            'I': ' ',
-            'H': 'H (red): 1 bond',
-            'O': 'O (blue): 2 bonds',
-            'N': 'N (green): 3 bonds',
-            'C': 'C (yellow): 4 bonds',
+        
+        if self.with_ai:
+            game_info = {
+                'B': 'Press B to solve the level with BFS',
+                'D': 'Press D to solve the level with DFS',
+                'I': 'Press I to solve the level with Iterative Deepening',
+                'M': 'Press M to go back to the main menu',
+                'Z': 'Press Z to undo connection',
+                'H': 'H (red): 1 bond',
+                'O': 'O (blue): 2 bonds',
+                'N': 'N (green): 3 bonds',
+                'C': 'C (yellow): 4 bonds',
         }
+                
+            
+        else:
+            game_info = {
+                'M': 'Press M to go back to the main menu',
+                'Z': 'Press Z to undo connection',
+                'H': 'H (red): 1 bond',
+                'O': 'O (blue): 2 bonds',
+                'N': 'N (green): 3 bonds',
+                'C': 'C (yellow): 4 bonds',
+                
+            }
 
         # Render and display each piece of text
         for atom_type, text in game_info.items():
@@ -219,12 +238,39 @@ class GameLevel(Game): #represents a level in a game
                     self.move_atom_player(0, -1)
                 elif event.key == pygame.K_DOWN:
                     self.move_atom_player(0, 1)
-                elif event.key == pygame.K_b: #"if the user presses the 'b' key, the game will go back to the main menu"
-                    # Create a GameState instance
+                elif event.key == pygame.K_m:
+                    main_menu = MainMenu()  
+                    main_menu.run()
+                elif event.key == pygame.K_b: 
+
                     game_state = GameState(self)
-                    # Call the dfs function
+                    start_time = time.time()
+                    path_to_goal = bfs(game_state)
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    print("Elapsed time for bfs: {:.2f} seconds".format(elapsed_time))
+                    print("Path to goal:", path_to_goal)
+
+                elif event.key == pygame.K_d:
+
+                    game_state = GameState(self)
+                    start_time = time.time()
                     path_to_goal = dfs(game_state)
-                    print(path_to_goal)  # print the path to the goal state or do something else with it
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    print("Elapsed time for dfs: {:.2f} seconds".format(elapsed_time))
+                    print("Path to goal:", path_to_goal)
+
+                elif event.key == pygame.K_i:
+
+                    game_state = GameState(self)
+                    start_time = time.time()
+                    path_to_goal = iterative_deepening(game_state)
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    print("Elapsed time for iterative deepening: {:.2f} seconds".format(elapsed_time))
+                    print("Path to goal:", path_to_goal)
+
                 elif event.key == pygame.K_z:
                     self.undo_last_action() 
                 elif event.key == pygame.K_ESCAPE:
@@ -333,9 +379,10 @@ class GameLevel(Game): #represents a level in a game
                         #FOR ATOM IN ALL_ATOMS -> update_positions(atom, dx, dy, visited)
 
             # After all movements made, check if all connections are filled
-   #         if self.check_all_connections_filled():
-    #            self.show_message("Level complete! Press Enter to choose the next level.")
-     #           ChooseLevel().run()
+            if self.with_ai == False:
+                if self.check_all_connections_filled():
+                    self.show_message("Level complete! Press Enter to choose the next level.")
+                    ChooseLevel().run()
 
         else:
             print("No moves possible at the moment")
@@ -491,7 +538,6 @@ class GameState:
             if self.game_level.is_valid_move(self.game_level.atom_player, dx, dy):
                 #adicionar a lista de moves possiveis se for
                 moves.append((dx, dy))
-        moves.append("Z")
         return moves
 
     def get_neighbors(self): #child_nodes
@@ -506,18 +552,18 @@ class GameState:
                 print("Position of the player after generate new states:", new_state.game_level.atom_player.x, new_state.game_level.atom_player.y, " || Move:", move)
         return neighbors
 
-    def make_move(self, move):
-
-        if move == "Z":
-            self.game_level.undo_last_action()
-            return GameState(self.game_level)
+    def make_move(self, move):       
             
         # Create a new GameLevel object with the given level number
-        new_level = GameLevel(self.game_level.level_number)
+        new_level = GameLevel(self.game_level.level_number, self.game_level.with_ai)
 
         new_level.atom_player.x = self.game_level.atom_player.x
         new_level.atom_player.y = self.game_level.atom_player.y
 
+        if move == "Z":
+            new_level.undo_last_action()
+            return GameState(new_level)
+        
         print("Position of the player before make move:", new_level.atom_player.x, new_level.atom_player.y)
         # Apply the move to the new game level
         dx, dy = move
