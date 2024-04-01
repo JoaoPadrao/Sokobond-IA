@@ -160,7 +160,7 @@ def greedy_search(initial_state):
 def heuristic(state):
 
     player_x, player_y = state.game_level.atom_player.x, state.game_level.atom_player.y
-    goal_x, goal_y = state.game_level.find_atom_goal_position()[0]
+    goal_x, goal_y = state.game_level.find_atom_goal_position()
     
     # Calculate the Manhattan distance between player and goal
     manhattan_distance = abs(player_x - goal_x) + abs(player_y - goal_y)

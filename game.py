@@ -152,11 +152,11 @@ class GameLevel(Game):
 
     #Iterates over the level data and returns the position of the goal atoms as a list of (x, y) coordinates
     def find_atom_goal_position(self):
-        atoms_goal = []
-        for cell in self.board_elements:
-            if isinstance(cell, Atom):
-                atoms_goal.append((cell.x, cell.y))
-        return atoms_goal
+        for y, row in enumerate(self.level_data):
+            for x, cell in enumerate(row):
+                if cell == 'G':
+                    return (x, y)
+        return None  
 
     #Creates an Atom object for the player based on the level number and the atom mapping defined in the constants.py file
     def get_atom_player(self):
