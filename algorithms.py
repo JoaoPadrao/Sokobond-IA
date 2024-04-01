@@ -1,4 +1,5 @@
 import copy
+from collections import deque
 from boards import BOARDS
 from elements import Atom, GridElement  
 from constants import *  
@@ -155,32 +156,6 @@ class GameState:
     
 
 #### Depth-first search algorithm
-"""
-def dfs(game_state):
-    stack = [(game_state, [])]  # Stack now stores tuples of (state, path)
-    visited = set()
-    print("Entered in DFS")  # Debugging line
-    print("Stack", stack)  # Debugging line
-    print("Visited Set", visited)  # Debugging line
-
-    while stack:
-        current_state, path = stack.pop()
-        state_str = str(current_state)
-        if state_str in visited:
-            continue
-        visited.add(state_str)
-
-        if game_state.is_goal():
-            return path  # Return the path to the goal state
-        
-        neighbors = current_state.get_neighbors()
-         
-        for neighbor, move in neighbors:
-            stack.append((neighbor, path + [move]))
-
-    return None  # No solution found
-"""
-
 def dfs(initial_state):
     stack = [(initial_state, [])]  # Stack stores tuples of (GameState, path_to_this_point)
     visited = set()  # Set to store visited states
@@ -208,4 +183,31 @@ def dfs(initial_state):
                 stack.append((neighbor, path + [move]))  # Add neighbor state and the path leading to it to the stack
 
     print("Visited Set:", visited)  # Debugging line
+    return None  # Return None if no goal state is found
+
+
+#### BFS: Breadth-first search algorithm
+
+def bfs(initial_state):
+    queue = deque([(initial_state, [])])  # Queue stores tuples of (GameState, path_to_this_point)
+    visited = set()  # Set to store visited states
+
+    while queue:
+        current_state, path = queue.popleft()  # Get the oldest state and path
+        state_id = str(current_state)  # Unique identifier for the state
+
+        if state_id in visited:  # Skip if we've already visited this state
+            continue
+
+        visited.add(state_id)  # Mark the current state as visited
+
+        if current_state.is_goal():  # Check if the current state satisfies the goal condition
+            return path  # Return the path leading to this goal state
+
+        # Explore neighbors (successor states) that haven't been visited
+        for neighbor, move in current_state.get_neighbors():
+            neighbor_id = str(neighbor)
+            if neighbor_id not in visited:
+                queue.append((neighbor, path + [move]))  # Add neighbor state and the path leading to it to the queue
+
     return None  # Return None if no goal state is found
