@@ -4,9 +4,11 @@ import os
 from boards import BOARDS, ATOM_MAPPING 
 from elements import Atom, GridElement  
 from constants import *  
-from algorithms import dfs, TreeNode, bfs, iterative_deepening,greedy_search, a_star_search
+from algorithms import dfs, bfs, iterative_deepening,greedy_search, a_star_search
 import copy
 import time
+
+# Class to represent the game
 class Game:
     def __init__(self):
         pygame.init()
@@ -15,6 +17,7 @@ class Game:
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("Sokobond")
 
+# Class to represent the main menu of the game
 class MainMenu(Game):
     def __init__(self):
         super().__init__()
@@ -22,46 +25,48 @@ class MainMenu(Game):
         self.selected_item = 0
         self.background_image = pygame.image.load(os.path.join("data", "Sokobond.png")) 
 
+    #Draw the main menu on the screen
     def draw(self):
         self.screen.fill(WHITE) 
         self.screen.blit(self.background_image, (self.screen_width // 2 - self.background_image.get_width() // 2, self.screen_height // 5 - self.background_image.get_height() // 2))
         font = pygame.font.Font(None, 36)
-        for index, item in enumerate(self.menu_items): #menu_items = ["Start Game", "Settings", "About", "Quit"]
+        for index, item in enumerate(self.menu_items): #menu_items = ["Start Game", "Start Game with AI", "Quit"]
             text = font.render(item, True, BLACK)
-            ##The get_rect() method is called on the text object, which is a Pygame Surface object created from rendering text.
-            #The get_rect() method returns a new rectangle that completely covers the surface
-            text_rect = text.get_rect(center=(self.screen_width // 2, 300 + index * 50)) #center the text on the screen
+            text_rect = text.get_rect(center=(self.screen_width // 2, 300 + index * 50)) #Center the text on the screen
             if index == self.selected_item:
                 pygame.draw.rect(self.screen, ORANGE, (text_rect.x - 10, text_rect.y - 5, text_rect.width + 20, text_rect.height + 10))  
             self.screen.blit(text, text_rect)
-            
-    def handle_events(self): #for handling user interactions 
+    
+    #Handle user interactions
+    def handle_events(self): 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: #if the user clicks the close button
-                pygame.quit() #cleanly exit the Pygame
-                sys.exit() #terminate the Python script
-            elif event.type == pygame.KEYDOWN: #if the user presses a key
+            if event.type == pygame.QUIT: #If the user clicks the quit button
+                pygame.quit() 
+                sys.exit() 
+            elif event.type == pygame.KEYDOWN: #If the user presses a key
                 if event.key == pygame.K_UP:
                     self.selected_item = (self.selected_item - 1) % len(self.menu_items)
                 elif event.key == pygame.K_DOWN:
                     self.selected_item = (self.selected_item + 1) % len(self.menu_items)
-                elif event.key == pygame.K_RETURN: #if the user presses the Enter key
-                    if self.selected_item == 0:
+                elif event.key == pygame.K_RETURN: #If the user presses the Enter key
+                    if self.selected_item == 0: #Start Game
                         choose_level = ChooseLevel()
                         choose_level.run()
-                    elif self.selected_item == 1:
-                        choose_level = ChooseLevel(with_ai=True)
+                    elif self.selected_item == 1: #Start Game with AI
+                        choose_level = ChooseLevel(with_ai=True) #Create a new ChooseLevel object with the with_ai parameter set to True because we want to play with AI
                         choose_level.run()
-                    elif self.selected_item == 2:
+                    elif self.selected_item == 2: #Quit
                         pygame.quit()
                         sys.exit()
 
+    #Run the main menu
     def run(self):
         while True:
             self.handle_events()
             self.draw()
             pygame.display.update()
 
+# Class to represent the level selection screen
 class ChooseLevel(Game):
     def __init__(self, with_ai=False):
         super().__init__()
@@ -70,6 +75,7 @@ class ChooseLevel(Game):
         self.background_image = pygame.image.load(os.path.join("data", "Sokobond.png")) 
         self.with_ai = with_ai
 
+    #Draw the level selection screen on the screen
     def draw(self):
         self.screen.fill(WHITE) 
         self.screen.blit(self.background_image, (self.screen_width // 2 - self.background_image.get_width() // 2, self.screen_height // 5 - self.background_image.get_height() // 2))
@@ -96,7 +102,7 @@ class ChooseLevel(Game):
                 pygame.draw.rect(self.screen, ORANGE, (text_rect.x - 10, text_rect.y - 5, text_rect.width + 20, text_rect.height + 10))  
             self.screen.blit(text, text_rect)
 
-            
+    #Handle user interactions
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -109,7 +115,7 @@ class ChooseLevel(Game):
                     self.selected_level = (self.selected_level + 1) % len(self.levels)
                 elif event.key == pygame.K_RETURN:
                     level_number = self.selected_level + 1
-                    game_level = GameLevel(level_number, self.with_ai)    
+                    game_level = GameLevel(level_number, self.with_ai)  # Create a new GameLevel object with the selected level number 
                     game_level.run()
                 elif event.key == pygame.K_ESCAPE:
                     return False
@@ -121,8 +127,9 @@ class ChooseLevel(Game):
             running =self.handle_events()
             self.draw()
             pygame.display.update()
-  
-class GameLevel(Game): #represents a level in a game
+
+# Class to represent a game level
+class GameLevel(Game):
     def __init__(self, level_number, with_ai):
         super().__init__()
         self.with_ai = with_ai
@@ -135,27 +142,30 @@ class GameLevel(Game): #represents a level in a game
         self.trackMoves = []
         self.lastAtomConnected = [self.atom_player]
 
-    def find_atom_player_position(self): #iterates over the level data and returns the position of the player (represented by 'X') as a tuple of (x, y) coordinates
+    #Iterates over the level data and returns the position of the player (represented by 'X') as a tuple of (x, y) coordinates
+    def find_atom_player_position(self):
         for y, row in enumerate(self.level_data):
             for x, cell in enumerate(row):
                 if cell == 'X':
                     return (x, y)
         return None  
 
-    def find_atom_goal_position(self): #iterates over the level data and returns the position of the goal atom (represented by 'G') as a tuple of (x, y) coordinates
-        for y, row in enumerate(self.level_data):
-            for x, cell in enumerate(row):
-                if cell == 'G':
-                    return (x, y)
-        return None
-    
+    #Iterates over the level data and returns the position of the goal atoms as a list of (x, y) coordinates
+    def find_atom_goal_position(self):
+        atoms_goal = []
+        for cell in self.board_elements:
+            if isinstance(cell, Atom):
+                atoms_goal.append((cell.x, cell.y))
+        return atoms_goal
+
+    #Creates an Atom object for the player based on the level number and the atom mapping defined in the constants.py file
     def get_atom_player(self):
-        atom_mapping = ATOM_MAPPING.get(self.level_number) # get the atom mapping for the current level defined in game level function: def __init__(self, level_number)
-        atom_player_attributes = atom_mapping.get('X') #por exemplo se level_number = 1, atom_mapping = {1: {'X' : [RED,1]}}
-        #from class Atom (defined in elements.py) -> (x, y, color, max_connection)
+        atom_mapping = ATOM_MAPPING.get(self.level_number) 
+        atom_player_attributes = atom_mapping.get('X') #For example if level_number = 1, atom_mapping = {1: {'X' : [RED,1]}}
+        #From class Atom (defined in elements.py) -> (x, y, color, max_connection)
         return Atom(self.atom_player_position[0], self.atom_player_position[1], atom_player_attributes[0], atom_player_attributes[1])
 
-
+    #Creates the board elements based on the level data 
     def create_board_elements(self):
         board_elements = []
         for y, row in enumerate(self.level_data):
@@ -172,6 +182,7 @@ class GameLevel(Game): #represents a level in a game
                     board_elements.append(Atom(x, y, DARK_YELLOW,4))
         return board_elements
     
+    #Draws the game level on the screen
     def draw(self):
         self.screen.fill(WHITE)
         
@@ -191,7 +202,7 @@ class GameLevel(Game): #represents a level in a game
 
         self.atom_player.draw(self.screen, self.cell_size)
         
-        #game and atoms info
+        #Game information
         font = pygame.font.Font(None, 24) # Initialize font
 
         info_x = 20
@@ -202,8 +213,9 @@ class GameLevel(Game): #represents a level in a game
                 'B': 'Press B to solve the level with BFS',
                 'D': 'Press D to solve the level with DFS',
                 'I': 'Press I to solve the level with Iterative Deepening',
+                'G': 'Press G to solve the level with Greedy Search',
+                'A': 'Press A to solve the level with A* Search',
                 'M': 'Press M to go back to the main menu',
-                'Z': 'Press Z to undo connection',
                 'H': 'H (red): 1 bond',
                 'O': 'O (blue): 2 bonds',
                 'N': 'N (green): 3 bonds',
@@ -230,7 +242,7 @@ class GameLevel(Game): #represents a level in a game
 
         pygame.display.flip() #Pygame function that updates the entire display
 
-   
+    #Handle user interactions
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -245,42 +257,44 @@ class GameLevel(Game): #represents a level in a game
                     self.move_atom_player(0, -1)
                 elif event.key == pygame.K_DOWN:
                     self.move_atom_player(0, 1)
-                elif event.key == pygame.K_m:
+                elif event.key == pygame.K_m: #Return to the main menu
                     main_menu = MainMenu()  
                     main_menu.run()
-                elif event.key == pygame.K_b: 
-
+                elif event.key == pygame.K_b: #BFS
                     game_state = GameState(self)
                     start_time = time.time()
                     path_to_goal = bfs(game_state)
                     end_time = time.time()
                     elapsed_time = end_time - start_time
-                    print("Elapsed time for bfs: {:.2f} seconds".format(elapsed_time))
-                    print("Path to goal:", path_to_goal)
-
-                elif event.key == pygame.K_d:
-
+                    if path_to_goal:
+                        print("Elapsed time for bfs: {:.2f} seconds".format(elapsed_time))
+                        print("Path to goal:", path_to_goal)
+                    else:
+                        print("No solution found for bfs")
+                elif event.key == pygame.K_d: #DFS
                     game_state = GameState(self)
                     start_time = time.time()
                     path_to_goal = dfs(game_state)
                     end_time = time.time()
                     elapsed_time = end_time - start_time
-                    print("Elapsed time for dfs: {:.2f} seconds".format(elapsed_time))
-                    print("Path to goal:", path_to_goal)
-
-                elif event.key == pygame.K_i:
-
+                    if path_to_goal:
+                        print("Elapsed time for dfs: {:.2f} seconds".format(elapsed_time))
+                        print("Path to goal:", path_to_goal)
+                    else:
+                        print("No solution found for dfs")
+                elif event.key == pygame.K_i: #Iterative Deepening
                     game_state = GameState(self)
                     start_time = time.time()
                     path_to_goal = iterative_deepening(game_state)
                     end_time = time.time()
                     elapsed_time = end_time - start_time
-                    print("Elapsed time for iterative deepening: {:.2f} seconds".format(elapsed_time))
-                    print("Path to goal:", path_to_goal[0])
-                    print("Depth reached:", path_to_goal[1])
-                
-                #greedy search
-                elif event.key == pygame.K_g:
+                    if path_to_goal:
+                        print("Elapsed time for iterative deepening: {:.2f} seconds".format(elapsed_time))
+                        print("Path to goal:", path_to_goal[0])
+                        print("Depth reached:", path_to_goal[1])
+                    else:
+                        print("No solution found for iterative deepening")
+                elif event.key == pygame.K_g: #Greedy Search
                     game_state = GameState(self)
                     start_time = time.time()
                     path_to_goal = greedy_search(game_state)
@@ -289,11 +303,9 @@ class GameLevel(Game): #represents a level in a game
                     if path_to_goal:
                         print("Elapsed time for greedy search: {:.2f} seconds".format(elapsed_time))
                         print("Path to goal:", path_to_goal)
-                        # Handle the goal state here
                     else:
                         print("No solution found for greedy search")
-                #a star
-                elif event.key == pygame.K_a:
+                elif event.key == pygame.K_a: #A* Search
                     game_state = GameState(self)
                     start_time = time.time()
                     path_to_goal = a_star_search(game_state)
@@ -302,41 +314,35 @@ class GameLevel(Game): #represents a level in a game
                     if path_to_goal:
                         print("Elapsed time for a star search: {:.2f} seconds".format(elapsed_time))
                         print("Path to goal:", path_to_goal)
-                        # Handle the goal state here
                     else:
                         print("No solution found for a star search")
                 elif event.key == pygame.K_z:
-                    self.undo_last_action() 
+                    self.undo_connection() #Undo a connection
                 elif event.key == pygame.K_ESCAPE:
                     return False
         return True
     
-    def undo_last_action(self):
+    #Function to undo a connection
+    def undo_connection(self):
         if len(self.trackMoves) > 0:    
             if self.trackMoves[-1][0] == "connection":
                 self.trackMoves[-1][1].remove_connection(self.trackMoves[-1][2])
                 print("Connection removed")
                 self.trackMoves.pop()
 
+    #Function to move the player's atom
     def move_atom_player(self, dx, dy):
-        print("Player position:", self.atom_player.x, self.atom_player.y)
-        for element in self.board_elements:
-            if isinstance(element, Atom):
-                print("Atom position:", element.x, element.y)
-        if self.is_valid_move(self.atom_player, dx, dy): #vai verificar se a nova posção é valida para todos os atomos considerando o delta x e y
-            #VERIFICAR PRIMEIRO SE HA UM ATOMO NA POSIÇÃO E SO DEPOIS ACTUALIZAR A POSIÇAO DO PLAYER
+        if self.is_valid_move(self.atom_player, dx, dy): #Check if the move is valid
 
-            #SINGLE ATOM CASE
-            if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
-                #target position é em relação ao player
+            #Single Atom Case
+            if len(self.atom_player.connection) == 0: #Check if the player's atom is NOT connected to any other atoms
                 new_x = self.atom_player.x + dx
                 new_y = self.atom_player.y + dy
-                #checks if there is an atom at the new position that can be connected to the player's atom
-                atom = self.is_atom_connection(new_x, new_y) #estamos a adicionar uma conexao na mesma celula que o player ???
+                #Checks if there is an atom at the new position that can be connected to the player's atom
+                atom = self.is_atom_connection(new_x, new_y) 
                 if atom is not None and atom not in self.atom_player.connection:
-                    #no updates on the player's position since there's an atom there
-                    if self.atom_player.add_connection(atom): #adicionar nova conexao SE respeitar as condições
-                        print("New atom connection:", self.atom_player.connection)
+                    #No updates on the player's position since there's an atom there
+                    if self.atom_player.add_connection(atom): #Add a new connection if the conditions are met
                         self.trackMoves.append(("connection", self.atom_player, atom))
                         self.lastAtomConnected.append(atom)
                     else: #PUSH the atom
@@ -347,12 +353,12 @@ class GameLevel(Game): #represents a level in a game
                             self.atom_player.x = new_x
                             self.atom_player.y = new_y
 
-                else: #there's no atom at the new position
-                    #updates the x and y coordinates of the player's atom to the new position
+                else: #There's no atom at the new position
+                    #Updates the x and y coordinates of the player's atom to the new position
                     self.atom_player.x = new_x
                     self.atom_player.y = new_y
 
-            #MOLECULE CASE
+            #Molecule Case
             elif len(self.atom_player.connection) > 0:
                 #Gather all atoms in the molecule
                 all_atoms = self.gather_molecule_atoms(self.atom_player)
@@ -360,15 +366,15 @@ class GameLevel(Game): #represents a level in a game
                 edge_atom = self.get_extreme_atoms(all_atoms, dx, dy)
 
                 if len(edge_atom) == 1:
-                    #target position é em relação ao edge_atom
+                    #Target position is in relation to the edge atom
                     print("One single edge")
                     new_x = edge_atom[0].x + dx
                     new_y = edge_atom[0].y + dy
-                    #checks if there is an atom at the new position that can be connected to the edge_atom
+                    #Checks if there is an atom at the new position that can be connected to the edge_atom
                     atom = self.is_atom_connection(new_x, new_y)
                     if atom is not None and atom not in all_atoms:
-                        #no updates on the player's position since there's an atom there
-                        if edge_atom[0].add_connection(atom): #adicionar nova conexao se respeitar as condições
+                        #No updates on the player's position since there's an atom there
+                        if edge_atom[0].add_connection(atom): #Add a new connection if the conditions are met
                             print("New molecule connection")
                             self.trackMoves.append(("connection", edge_atom[0], atom))
                             self.lastAtomConnected.append(atom)
@@ -378,23 +384,24 @@ class GameLevel(Game): #represents a level in a game
                             if valid_move: ## Move the atom if the move is valid
                                 self.update_positions(atom, dx, dy,set())
                                 self.update_positions(edge_atom[0], dx, dy,set())
-                    else: #there's no atom at the new position
-                    #updates the x and y coordinates of all atoms in the molecule to the new position            
+                    else: #There's no atom at the new position
+                    #Updates the x and y coordinates of all atoms in the molecule to the new position            
                         visited = set()
                         self.update_positions(self.atom_player, dx, dy, visited)
 
+                #Multiple edge atoms
                 elif len(edge_atom) > 1:
                     print("Multiple edge atoms")
                     atom_found = False
                     for atom_element in edge_atom:
-                        #target position é em relação a todos os atomos na borda
+                        #Target position is in relation to all atoms on the edge
                         new_x = atom_element.x + dx
                         new_y = atom_element.y + dy
-                        #checks if there is an atom at the new position that can be connected
+                        #Checks if there is an atom at the new position that can be connected
                         atom = self.is_atom_connection(new_x, new_y)
                         if atom is not None and atom not in all_atoms:
                             atom_found = True
-                            if atom_element.add_connection(atom): #adicionar nova conexao se respeitar as condições
+                            if atom_element.add_connection(atom): #Add a new connection if the conditions are met
                                 print("New molecule connection")
                                 self.trackMoves.append(("connection", atom_element, atom))
                                 self.lastAtomConnected.append(atom)
@@ -406,14 +413,12 @@ class GameLevel(Game): #represents a level in a game
                                     self.update_positions(atom, dx, dy,set())
                                     self.update_positions(self.atom_player, dx, dy, set())
                     if not atom_found:
-                        #updates the x and y coordinates of all atoms in the molecule to the new position            
+                        #Updates the x and y coordinates of all atoms in the molecule to the new position            
                         visited = set()
                         self.update_positions(self.atom_player, dx, dy, visited)
-                        #next: talvez for loop em todos os atomos da molecula?
-                        #FOR ATOM IN ALL_ATOMS -> update_positions(atom, dx, dy, visited)
 
             # After all movements made, check if all connections are filled
-            if self.with_ai == False:
+            if self.with_ai == False: #If the player is playing the game
                 if self.check_all_connections_filled():
                     self.show_message("Level complete! Press Enter to choose the next level.")
                     ChooseLevel().run()
@@ -421,21 +426,22 @@ class GameLevel(Game): #represents a level in a game
         else:
             print("No moves possible at the moment")
 
+
     ############################################################ AUX FUNCTIONS ############################################################
     #FUNCTION TO SHOW A POP-UP MESSAGE
     def show_message(self, message):
 
-        font = pygame.font.Font(None, 26) # to define the font and size
-        text = font.render(message, True, (255, 255, 255))  # render a white text
-        # to define the text rectangle and position it at the center of the screen
+        font = pygame.font.Font(None, 26) 
+        text = font.render(message, True, (255, 255, 255))  
+
         text_rect = text.get_rect(center=(self.screen.get_width() / 2, self.screen.get_height() / 2))
         # Draw a semi-transparent rectangle as the background of the pop-up
         background_rect = pygame.Rect(text_rect.x - 20, text_rect.y - 20, text_rect.width + 40, text_rect.height + 40)
         pygame.draw.rect(self.screen, (0, 0, 0, 128), background_rect)  # Black semi-transparent background
 
-        self.screen.blit(text, text_rect) # to draw (blit) the text on the screen
+        self.screen.blit(text, text_rect) 
 
-        pygame.display.flip()  # to update the display
+        pygame.display.flip() 
 
         # Wait for the player to press Enter
         while True:
@@ -451,14 +457,13 @@ class GameLevel(Game): #represents a level in a game
     def check_all_connections_filled(self):
         # Iterate over all atom elements in the game grid
         for element in self.board_elements:
-            # Check if the element is an instance of Atom
             if isinstance(element, Atom):
                 # Check if the atom's connections are less than its max connections
                 if len(element.connection) < element.max_connection:
                     # Found an atom that doesn't have all connections filled
                     return False
         # All atoms have their connections filled
-        return True
+        return True 
         
     ### FUNCTION TO GATHER ALL ATOMS IN THE MOLECULE ###
     def gather_molecule_atoms(self, atom, visited=None):
@@ -532,11 +537,11 @@ class GameLevel(Game): #represents a level in a game
         return True
 
    
-    #used to check if there's an atom at a specific location on the game board that can be connected to the player's atom
+    #Used to check if there's an atom at a specific location on the game board that can be connected to the player's atom
     def is_atom_connection(self, target_x, target_y):
-        for element in self.board_elements: #iterates over the board elements and checks if there's an atom at the target location
+        for element in self.board_elements: #Iterates over the board elements and checks if there's an atom at the target location
             if isinstance(element, Atom) and element != self.atom_player and element.x == target_x and element.y == target_y:
-                return element  #returning an atom object if it's found at the target location
+                return element  
         return None
     
      
@@ -551,9 +556,6 @@ class GameLevel(Game): #represents a level in a game
 ############ NEW GAME STATE CLASS ############
 class GameState:
     def __init__(self, game_level):
-        #GameLevel.find_atom_player_position
-        #self.player_position = player_position  # Tuple representing player's position (x, y)
-        #self.level = level  # Current level
         self.game_level = game_level
 
     def __eq__(self, other):
@@ -566,29 +568,28 @@ class GameState:
         if self.game_level.check_all_connections_filled():
             return True
         
-    
+    #Function to get all possible moves
     def get_possible_moves(self):
         moves = []
         # Check each direction: up, down, left, right
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            #verificar se a move é válida
+            #Verify if the move is valid
             if self.game_level.is_valid_move(self.game_level.atom_player, dx, dy):
-                #adicionar a lista de moves possiveis se for
+                #Add the move to the list of possible moves
                 moves.append((dx, dy))
         return moves
-
+    
+    #Function to get all possible neighbors after a move
     def get_neighbors(self): #child_nodes
         # Generate all possible successor states
         neighbors = []
-        print("Possible moves:", self.get_possible_moves())
-        print("Position of the player before generate new states:", self.game_level.atom_player.x, self.game_level.atom_player.y)
         for move in self.get_possible_moves():
-            new_state = self.make_move(move) #new_state = GameState(self.make_move(move), self.level)  # Create new GameState object
+            new_state = self.make_move(move) 
             if new_state:
                 neighbors.append((new_state, move))  # Return move along with state
-                print("Position of the player after generate new states:", new_state.game_level.atom_player.x, new_state.game_level.atom_player.y, " || Move:", move)
         return neighbors
 
+    #Function to make a move
     def make_move(self, move):       
             
         # Create a new GameLevel object with the given level number
@@ -598,11 +599,7 @@ class GameState:
         new_level.atom_player.y = self.game_level.atom_player.y
         new_level.atom_player.connection = copy.deepcopy(self.game_level.atom_player.connection)
         new_level.board_elements = copy.deepcopy(self.game_level.board_elements)
-        if move == "Z":
-            new_level.undo_last_action()
-            return GameState(new_level)
         
-        print("Position of the player before make move:", new_level.atom_player.x, new_level.atom_player.y)
         # Apply the move to the new game level
         dx, dy = move
         new_level.move_atom_player(dx, dy)

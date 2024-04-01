@@ -1,6 +1,7 @@
 # This is used to map the "Atom Player" to the respective color and max_connection(bonds)
 from constants import *
 
+# This is used to map the "Atom Player" to the respective color and max_connection(bonds)
 ATOM_MAPPING = {
     1: {
         'X' : [RED,1]
@@ -34,6 +35,7 @@ ATOM_MAPPING = {
     }
 }
 
+# Boards for the game
 BOARDS = {
 
     1: [

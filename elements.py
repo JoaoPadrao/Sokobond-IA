@@ -12,6 +12,7 @@ class Atom:
         self.target_y = y 
         self.connection = [] #list of atoms that are connected to this atom
 
+
     def add_connection(self, atom):
         if (atom in self.connection or len(self.connection) >= self.max_connection or len(atom.connection) >= atom.max_connection):
             return False  
@@ -26,7 +27,7 @@ class Atom:
             self.connection.remove(atom)
             atom.connection.remove(self)
 
-    #draws the atom on the screen and the number of connections it has
+    #Draws the atom on the screen and the number of connections it has
     def draw(self, screen, cell_size):
         pygame.draw.circle(screen, self.color, (self.x * cell_size + cell_size // 2, self.y * cell_size + cell_size // 2), cell_size // 3)  # Draw a circle in the center of the cell
         font = pygame.font.Font(None, 24)
