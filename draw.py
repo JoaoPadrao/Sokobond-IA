@@ -4,7 +4,7 @@ import os
 from boards import BOARDS, ATOM_MAPPING 
 from elements import Atom, GridElement  
 from constants import *  
-from algorithms import dfs, TreeNode, bfs, iterative_deepening
+from algorithms import dfs, TreeNode, bfs, iterative_deepening,greedy_search, a_star_search
 import copy
 import time
 class Game:
@@ -142,6 +142,13 @@ class GameLevel(Game): #represents a level in a game
                     return (x, y)
         return None  
 
+    def find_atom_goal_position(self): #iterates over the level data and returns the position of the goal atom (represented by 'G') as a tuple of (x, y) coordinates
+        for y, row in enumerate(self.level_data):
+            for x, cell in enumerate(row):
+                if cell == 'G':
+                    return (x, y)
+        return None
+    
     def get_atom_player(self):
         atom_mapping = ATOM_MAPPING.get(self.level_number) # get the atom mapping for the current level defined in game level function: def __init__(self, level_number)
         atom_player_attributes = atom_mapping.get('X') #por exemplo se level_number = 1, atom_mapping = {1: {'X' : [RED,1]}}
@@ -269,8 +276,35 @@ class GameLevel(Game): #represents a level in a game
                     end_time = time.time()
                     elapsed_time = end_time - start_time
                     print("Elapsed time for iterative deepening: {:.2f} seconds".format(elapsed_time))
-                    print("Path to goal:", path_to_goal)
-
+                    print("Path to goal:", path_to_goal[0])
+                    print("Depth reached:", path_to_goal[1])
+                
+                #greedy search
+                elif event.key == pygame.K_g:
+                    game_state = GameState(self)
+                    start_time = time.time()
+                    path_to_goal = greedy_search(game_state)
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    if path_to_goal:
+                        print("Elapsed time for greedy search: {:.2f} seconds".format(elapsed_time))
+                        print("Path to goal:", path_to_goal)
+                        # Handle the goal state here
+                    else:
+                        print("No solution found for greedy search")
+                #a star
+                elif event.key == pygame.K_a:
+                    game_state = GameState(self)
+                    start_time = time.time()
+                    path_to_goal = a_star_search(game_state)
+                    end_time = time.time()
+                    elapsed_time = end_time - start_time
+                    if path_to_goal:
+                        print("Elapsed time for a star search: {:.2f} seconds".format(elapsed_time))
+                        print("Path to goal:", path_to_goal)
+                        # Handle the goal state here
+                    else:
+                        print("No solution found for a star search")
                 elif event.key == pygame.K_z:
                     self.undo_last_action() 
                 elif event.key == pygame.K_ESCAPE:
@@ -525,6 +559,9 @@ class GameState:
     def __eq__(self, other):
         return self.game_level.atom_player.x == other.game_level.atom_player.x and self.game_level.atom_player.y == other.game_level.atom_player.y
 
+    def __hash__(self):
+        return hash(self.game_level)
+    
     def is_goal(self): #same as GameLevel.check_all_connections_filled
         if self.game_level.check_all_connections_filled():
             return True
@@ -559,7 +596,8 @@ class GameState:
 
         new_level.atom_player.x = self.game_level.atom_player.x
         new_level.atom_player.y = self.game_level.atom_player.y
-
+        new_level.atom_player.connection = copy.deepcopy(self.game_level.atom_player.connection)
+        new_level.board_elements = copy.deepcopy(self.game_level.board_elements)
         if move == "Z":
             new_level.undo_last_action()
             return GameState(new_level)
