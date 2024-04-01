@@ -1,11 +1,10 @@
+import copy
 from boards import BOARDS
 from elements import Atom, GridElement  
 from constants import *  
 
 class GameState:
     def __init__(self, level, player_position):
-        if player_position is None:
-            raise ValueError("player_position cannot be None")
         self.level = level # Current level
         self.player_position = player_position # tuplo (x, y) passar a posiçao inicial de p/ cada nivel
         ####### iguais a GameLevel
@@ -31,6 +30,10 @@ class GameState:
         return self.level == other.level and self.player_position == other.player_position
 
      ####### Game State exclusive  #####
+    def update_state(self, new_player_position):
+        self.player_position = new_player_position
+        # Assuming the atom_player's position is updated with the player's position
+        self.atom_player.x, self.atom_player.y = new_player_position
 
     def get_possible_moves(self):
         moves = []
@@ -57,7 +60,10 @@ class GameState:
         # Make the move on the copy
         new_player_position = self.move_atom_player(dx, dy)
         # Return a new GameState object that represents the new game state
-        return GameState(self.level, new_player_position)
+        #return GameState(self.level, new_player_position)
+        new_state = copy.deepcopy(self)  # Create a deep copy of the current state
+        new_state.update_state(new_player_position)  # Update the state of the copy
+        return new_state  # Return the new state
     
     
     def create_board_elements(self):
@@ -83,14 +89,15 @@ class GameState:
         new_x = atom.x + dx
         new_y = atom.y + dy
 
+        print("Checking if move is valid: ", new_x, new_y)
         # Check if new position is outside the grid
         if new_x < 0 or new_x >= GRID_SIZE or new_y < 0 or new_y >= GRID_SIZE:
-            print("Invalid move: Outside Grid")
+            #print("Invalid move: Outside Grid")
             return False
 
         # Check if new position is a wall
         if self.level_data[new_y][new_x] == '#':
-            print("Invalid move: Wall")
+            #print("Invalid move: Wall")
             return False
 
         # Check for all connected atoms
@@ -124,10 +131,10 @@ class GameState:
                     print("Connection successfully added")
                     print("atom info:", atom.x, atom.y, atom.max_connection, len(atom.connection))
                     print("player info:", self.atom_player.x, self.atom_player.y, self.atom_player.max_connection, len(self.atom_player.connection))
-                    #return (self.atom_player.x, self.atom_player.y)
-            #else: #there's no atom at the new position
+                    return (new_x, new_y)
+            else: #there's no atom at the new position
                 #updates the x and y coordinates of the player's atom to the new position
-            return (new_x, new_y)
+                return (new_x, new_y)
 
     def is_goal(self): #same as GameLevel.check_all_connections_filled
         # Iterate over all atom elements in the game grid
@@ -144,11 +151,17 @@ class GameState:
             return False
         else:
             return True
+        
+    
 
-#### Depth-first search algorithm   
+#### Depth-first search algorithm
+"""
 def dfs(game_state):
     stack = [(game_state, [])]  # Stack now stores tuples of (state, path)
     visited = set()
+    print("Entered in DFS")  # Debugging line
+    print("Stack", stack)  # Debugging line
+    print("Visited Set", visited)  # Debugging line
 
     while stack:
         current_state, path = stack.pop()
@@ -157,11 +170,42 @@ def dfs(game_state):
             continue
         visited.add(state_str)
 
-        if current_state.is_goal():
+        if game_state.is_goal():
             return path  # Return the path to the goal state
         
         neighbors = current_state.get_neighbors()
+         
         for neighbor, move in neighbors:
             stack.append((neighbor, path + [move]))
 
     return None  # No solution found
+"""
+
+def dfs(initial_state):
+    stack = [(initial_state, [])]  # Stack stores tuples of (GameState, path_to_this_point)
+    visited = set()  # Set to store visited states
+    print("Entered in DFS")  # Debugging line
+    print("Stack", stack)  # Debugging line
+
+    while stack:
+        current_state, path = stack.pop()  # Get the most recent state and path
+        state_id = str(current_state)  # Unique identifier for the state
+        print("Current State: ", state_id)  # Debugging line
+
+        if state_id in visited:  # Skip if we've already visited this state
+            continue
+
+        visited.add(state_id)  # Mark the current state as visited
+
+        if current_state.is_goal():  # Check if the current state satisfies the goal condition
+            return path  # Return the path leading to this goal state
+
+        # Explore neighbors (successor states) that haven't been visited
+        for neighbor, move in current_state.get_neighbors():
+            neighbor_id = str(neighbor)
+            if neighbor_id not in visited:
+                print("Neighbor State: ", neighbor_id)  # Debugging line
+                stack.append((neighbor, path + [move]))  # Add neighbor state and the path leading to it to the stack
+
+    print("Visited Set:", visited)  # Debugging line
+    return None  # Return None if no goal state is found
