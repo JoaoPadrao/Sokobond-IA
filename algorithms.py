@@ -13,22 +13,51 @@ class GameState:
         print("Entered in GameState")  # Debugging line
         print(player_position)  # Debugging line
         self.atom_player = Atom(player_position[0], player_position[1], RED, 1)
+        self.player_connections = self.atom_player.connection # lista de conexoes do player
         self.board_elements = self.create_board_elements()
 
+    """
     def __str__(self):
         # Include level and player position in the string representation
-        return 'Level: ' + str(self.level) + ', Player Position: ' + str(self.player_position)
+        return 'Level: ' + str(self.level) + ', Player Position: ' + str(self.player_position) + ', Player Connections: ' + str(self.player_connections)
 
     def __hash__(self):
         # Use a tuple of the level and player position
-        return hash((self.level, self.player_position))
+        return hash((self.level, self.player_position, self.player_connections))
 
     def __eq__(self, other):
         # Check if other is a GameState object
         if not isinstance(other, GameState):
             return False
         # Compare the level and player position
-        return self.level == other.level and self.player_position == other.player_position
+        return self.level == other.level and self.player_position == other.player_position and self.player_connections == other.player_connections
+    
+    """
+    def __str__(self):
+        # Include level, player position, and positions of connected atoms
+        connections_str = [(atom.x, atom.y) for atom in self.player_connections]
+        return 'Level: {}, Player Position: {}, Player Connections: {}'.format(self.level, self.player_position, connections_str)
+
+    def __hash__(self):
+        # Use a tuple of the level, player position, and positions of connected atoms
+        connections_tuple = tuple((atom.x, atom.y) for atom in self.player_connections)
+        return hash((self.level, self.player_position, connections_tuple))
+
+    def __eq__(self, other):
+        # Check if other is a GameState object
+        if not isinstance(other, GameState):
+            return False
+
+        # Compare the level and player position
+        level_equal = self.level == other.level
+        position_equal = self.player_position == other.player_position
+
+        # Compare the positions of the atoms in player_connections
+        self_connections = [(atom.x, atom.y) for atom in self.player_connections]
+        other_connections = [(atom.x, atom.y) for atom in other.player_connections]
+        connections_equal = self_connections == other_connections
+
+        return level_equal and position_equal and connections_equal
 
      ####### Game State exclusive  #####
     def update_state(self, new_player_position):
@@ -120,8 +149,8 @@ class GameState:
         return None
 
     def move_atom_player(self, dx, dy):
-         #SINGLE ATOM CASE
-            #if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
+        #### SINGLE ATOM CASE
+        if len(self.atom_player.connection) == 0: #check if the player's atom is NOT connected to any other atoms
             new_x = self.atom_player.x + dx
             new_y = self.atom_player.y + dy
             #checks if there is an atom at the new position that can be connected to the player's atom
@@ -132,26 +161,124 @@ class GameState:
                     print("Connection successfully added")
                     print("atom info:", atom.x, atom.y, atom.max_connection, len(atom.connection))
                     print("player info:", self.atom_player.x, self.atom_player.y, self.atom_player.max_connection, len(self.atom_player.connection))
-                    return (new_x, new_y)
+            return (new_x, new_y)
+        
+        #### CHANGED HERE 
+        elif len(self.atom_player.connection) > 0:
+            print("Player has connections")
+            #Gather all atoms in the molecule
+            all_atoms = self.gather_molecule_atoms(self.atom_player)
+            # Get a LIST of atoms on the edge of the molecule
+            edge_atom = self.get_extreme_atoms(all_atoms, dx, dy) #returns a list
+            print("Edge atoms: ", edge_atom)
+
+            #if len(edge_atom) == 1:
+                #target position é em relação ao edge_atom
+            print("One single edge")
+            new_x = edge_atom[0].x + dx
+            new_y = edge_atom[0].y + dy
+            #checks if there is an atom at the new position that can be connected to the edge_atom
+            atom = self.is_atom_connection(new_x, new_y)
+            if atom is not None and atom not in all_atoms:
+                #no updates on the player's position since there's an atom there
+                if edge_atom[0].add_connection(atom): #adicionar nova conexao se respeitar as condições
+                    print("New molecule connection")
+                else: #PUSH
+                    print("Can not connect Atom")
+                    valid_move = self.is_valid_move(atom, dx, dy)
+                    if valid_move: ## Move the atom if the move is valid
+                        self.update_positions(atom, dx, dy,set())
+                        self.update_positions(edge_atom[0], dx, dy,set())
             else: #there's no atom at the new position
-                #updates the x and y coordinates of the player's atom to the new position
-                return (new_x, new_y)
+                #updates the x and y coordinates of all atoms in the molecule to the new position            
+                visited = set()
+                self.update_positions(self.atom_player, dx, dy, visited)
+            return (self.atom_player.x, self.atom_player.y)
+
+            """
+            elif len(edge_atom) > 1:
+                print("Multiple edge atoms")
+                atom_found = False
+                for atom_element in edge_atom:
+                    #target position é em relação a todos os atomos na borda
+                    new_x = atom_element.x + dx
+                    new_y = atom_element.y + dy
+
+                    #checks if there is an atom at the new position that can be connected
+                    atom = self.is_atom_connection(new_x, new_y)
+                    if atom is not None and atom not in all_atoms:
+                        atom_found = True
+                        if atom_element.add_connection(atom): #adicionar nova conexao se respeitar as condições
+                            print("New molecule connection")
+                        else:
+                            print("Can not connect Atom")
+                            valid_move = self.is_valid_move(atom, dx, dy)
+                            if valid_move: ## Move the atom if the move is valid
+                                print("Atom is being pushed")
+                                self.update_positions(atom, dx, dy,set())
+                                self.update_positions(self.atom_player, dx, dy, set())
+                        return (self.atom_player.x, self.atom_player.y)
+                    if not atom_found:
+                        #updates the x and y coordinates of all atoms in the molecule to the new position            
+                        visited = set()
+                        self.update_positions(self.atom_player, dx, dy, visited)
+                        return (self.atom_player.x, self.atom_player.y)
+            """
+
+    def gather_molecule_atoms(self, atom, visited=None):
+        if visited is None:
+            visited = set()
+        visited.add(atom)
+    
+        for connected_atom in atom.connection:
+            if connected_atom not in visited:
+                self.gather_molecule_atoms(connected_atom, visited)
+    
+        return visited
+        
+    ### GET ATOM ON THE EDGE OF THE MOLECULE FUNCTIONS ###
+    def get_extreme_atoms(self, atoms, dx, dy):
+        if dx < 0:  # left (-1,0)
+            min_x = min(atom.x for atom in atoms)
+            return [atom for atom in atoms if atom.x == min_x]
+        elif dx > 0:  # right (1,0)
+            max_x = max(atom.x for atom in atoms)
+            return [atom for atom in atoms if atom.x == max_x]
+        elif dy < 0:  # up (0,-1)
+            min_y = min(atom.y for atom in atoms)
+            return [atom for atom in atoms if atom.y == min_y]
+        else:  # down
+            max_y = max(atom.y for atom in atoms)
+            return [atom for atom in atoms if atom.y == max_y]
+
+    ### UPDATE POSITIONS OF ALL ATOMS FUNCTIONS ###
+    def update_positions(self, atom, dx, dy, visited=None):
+        if visited is None:
+            visited = set()
+        # Update the position of the current atom
+        atom.x += dx
+        atom.y += dy
+        # Add the current atom to the set of visited atoms
+        visited.add(atom)
+
+        # Recursively update the positions of all connected atoms that haven't been visited yet
+        for connected_atom in atom.connection:
+            if connected_atom not in visited:
+                self.update_positions(connected_atom, dx, dy, visited)
+
 
     def is_goal(self): #same as GameLevel.check_all_connections_filled
         # Iterate over all atom elements in the game grid
-        #for element in self.board_elements:
+        for element in self.board_elements:
             # Check if the element is an instance of Atom
-            #if isinstance(element, Atom):
+            if isinstance(element, Atom):
                 # Check if the atom's connections are less than its max connections
-                #print(f"Atom at ({element.x}, {element.y}) has {len(element.connection)} connections out of {element.max_connection}")
-                #if len(element.connection) < element.max_connection:
+                print(f"Atom at ({element.x}, {element.y}) has {len(element.connection)} connections out of {element.max_connection}")
+                if len(element.connection) < element.max_connection:
                     # Found an atom that doesn't have all connections filled
-                    #return False
-        # All atoms have their connections filled
-        if len(self.atom_player.connection) == 0:
-            return False
-        else:
-            return True
+                    return False
+                else:
+                    return True
         
     
 

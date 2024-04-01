@@ -218,11 +218,11 @@ class GameLevel(Game): #represents a level in a game
                     self.move_atom_player(0, -1)
                 elif event.key == pygame.K_DOWN:
                     self.move_atom_player(0, 1)
-                elif event.key == pygame.K_b: #"if the user presses the 'b' key, the game will go back to the main menu"
+                elif event.key == pygame.K_d: #"if the user presses the 'b' key, the game will go back to the main menu"
                     # Call the dfs function
                     path_to_goal = dfs(GameState(1, (7,5)))
                     print(path_to_goal)  # print the path to the goal state
-                elif event.key == pygame.K_d: #"if the user presses the 'b' key, the game will go back to the main menu"
+                elif event.key == pygame.K_b: #"if the user presses the 'b' key, the game will go back to the main menu"
                     # Call the dfs function
                     path_to_goal = bfs(GameState(1, (7,5)))
                     print(path_to_goal)  # print the path to the goal state
